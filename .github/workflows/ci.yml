@@ -18,3 +18,24 @@ jobs:
           cache: pnpm
       - run: pnpm install
       - run: pnpm run all
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run
+        uses: ./
+        id: test
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          documentation_paths: |
+            test
+          backend_paths: |
+            test
+          frontend_paths: |
+            test
+      - name: Echo plugin output
+        run: | 
+          echo "TEST_ENVIRONMENT: $TEST_ENVIRONMENT"
+          echo "frontend_tasks: ${{ steps.test.outputs.frontend_tasks }}"
+          echo "documentation_tasks: ${{ steps.test.outputs.documentation_tasks }}"
+          echo "backend_tasks: ${{ steps.test.outputs.backend_tasks }}"

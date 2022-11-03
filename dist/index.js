@@ -1,7 +1,65 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 1932:
+/***/ 3789:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.usePyTestTagCheck = void 0;
+const commit_1 = __nccwpck_require__(7185);
+const core = __importStar(__nccwpck_require__(7954));
+const tags_1 = __nccwpck_require__(6501);
+const ENV_VAR_TEST_ENVIRONMENT = 'TEST_ENVIRONMENT';
+const ENV_NFTS = 'nfts';
+const ENV_NIGHTLY = 'nightly';
+const usePyTestTagCheck = (commitMessage, needsToRun) => {
+    const checkForTag = (0, commit_1.useCheckForTag)(commitMessage);
+    return () => {
+        if (checkForTag(tags_1.PyTag.SKIP_PYTEST)) {
+            core.info(`[${tags_1.PyTag.SKIP_PYTEST}] detected skipping backend tests`);
+            needsToRun.backend = false;
+        }
+        else {
+            if (checkForTag(tags_1.PyTag.RUN_PY_NFT)) {
+                core.exportVariable(ENV_VAR_TEST_ENVIRONMENT, ENV_NFTS);
+            }
+            else if (checkForTag(tags_1.PyTag.RUN_ALL_TEST)) {
+                core.exportVariable(ENV_VAR_TEST_ENVIRONMENT, ENV_NIGHTLY);
+            }
+        }
+    };
+};
+exports.usePyTestTagCheck = usePyTestTagCheck;
+
+
+/***/ }),
+
+/***/ 1058:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -46,67 +104,36 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getInputAsArray = exports.changeDetected = exports.shouldSkip = exports.shouldRun = exports.checkForChanges = void 0;
+exports.changeDetected = exports.checkForChanges = void 0;
 const core = __importStar(__nccwpck_require__(7954));
 const github = __importStar(__nccwpck_require__(9939));
-function checkForChanges(check) {
+const checkForChanges = (check) => __awaiter(void 0, void 0, void 0, function* () {
     var e_1, _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        const token = core.getInput('token', { required: true });
-        const client = github.getOctokit(token);
-        const { context } = github;
-        if (!context.payload.pull_request) {
-            // eslint-disable-next-line no-console
-            console.info(`This is not a PR`);
-            check(null);
-            return;
+    const token = core.getInput('token', { required: true });
+    const client = github.getOctokit(token);
+    const { context } = github;
+    if (!context.payload.pull_request) {
+        core.info(`This isn't a PR`);
+        check(null);
+        return;
+    }
+    const { number } = context.payload.pull_request;
+    try {
+        for (var _b = __asyncValues(client.paginate.iterator(client.rest.pulls.listFiles, Object.assign(Object.assign({}, context.repo), { pull_number: number }))), _c; _c = yield _b.next(), !_c.done;) {
+            const response = _c.value;
+            check(response.data.map(value => value.filename));
         }
-        const { number } = context.payload.pull_request;
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
         try {
-            for (var _b = __asyncValues(client.paginate.iterator(client.rest.pulls.listFiles, Object.assign(Object.assign({}, context.repo), { pull_number: number }))), _c; _c = yield _b.next(), !_c.done;) {
-                const response = _c.value;
-                check(response.data.map(value => value.filename));
-            }
+            if (_c && !_c.done && (_a = _b.return)) yield _a.call(_b);
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) yield _a.call(_b);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-    });
-}
+        finally { if (e_1) throw e_1.error; }
+    }
+});
 exports.checkForChanges = checkForChanges;
-function tagInCommitMessage(tag) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const token = core.getInput('token', { required: true });
-        const client = github.getOctokit(token);
-        const { context } = github;
-        if (!context.payload.pull_request) {
-            // eslint-disable-next-line no-console
-            console.info(`Didn't detect a PR`);
-            return false;
-        }
-        const { sha } = context.payload.pull_request.head;
-        const response = yield client.rest.git.getCommit(Object.assign(Object.assign({}, context.repo), { commit_sha: sha }));
-        const { message } = response.data;
-        return !!message && tag.exec(message) !== null;
-    });
-}
-function shouldRun() {
-    return __awaiter(this, void 0, void 0, function* () {
-        return tagInCommitMessage(/\[run all]/gm);
-    });
-}
-exports.shouldRun = shouldRun;
-function shouldSkip() {
-    return __awaiter(this, void 0, void 0, function* () {
-        return tagInCommitMessage(/\[skip ci]|\[ci skip]/gm);
-    });
-}
-exports.shouldSkip = shouldSkip;
-function changeDetected(monitored, changed) {
+const changeDetected = (monitored, changed) => {
     for (const path of monitored) {
         for (const detected of changed) {
             if (detected.startsWith(path) || detected === path) {
@@ -115,16 +142,124 @@ function changeDetected(monitored, changed) {
         }
     }
     return false;
-}
+};
 exports.changeDetected = changeDetected;
-function getInputAsArray(name, options) {
-    return core
-        .getInput(name, options)
-        .split('\n')
-        .map(s => s.trim())
-        .filter(x => x !== '');
+
+
+/***/ }),
+
+/***/ 7185:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.useCheckForTag = exports.getCommitMessage = void 0;
+const core = __importStar(__nccwpck_require__(7954));
+const github = __importStar(__nccwpck_require__(9939));
+const getCommitMessage = () => __awaiter(void 0, void 0, void 0, function* () {
+    const token = core.getInput('token', { required: true });
+    const client = github.getOctokit(token);
+    const { context } = github;
+    if (!context.payload.pull_request) {
+        core.info(`Didn't detect a PR`);
+        return null;
+    }
+    const { sha } = context.payload.pull_request.head;
+    const response = yield client.rest.git.getCommit(Object.assign(Object.assign({}, context.repo), { commit_sha: sha }));
+    const { message } = response.data;
+    return message;
+});
+exports.getCommitMessage = getCommitMessage;
+const getRegexFromTag = (tag) => new RegExp(`\\[${tag}\\]`, 'gm');
+const useCheckForTag = (message) => (tag) => {
+    return !!message && getRegexFromTag(tag).test(message);
+};
+exports.useCheckForTag = useCheckForTag;
+
+
+/***/ }),
+
+/***/ 8245:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ActionInputs = void 0;
+const core = __importStar(__nccwpck_require__(7954));
+class ActionInputs {
+    constructor() {
+        this.getInputAsArray = (name, options) => core
+            .getInput(name, options)
+            .split('\n')
+            .map(s => s.trim())
+            .filter(x => x !== '');
+        const BACKEND_PATHS = 'backend_paths';
+        const FRONTEND_PATHS = 'frontend_paths';
+        const DOCUMENTATION_PATHS = 'documentation_paths';
+        const options = { required: true };
+        this.backendPaths = this.getInputAsArray(BACKEND_PATHS, options);
+        this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
+        this.documentationPaths = this.getInputAsArray(DOCUMENTATION_PATHS, options);
+    }
 }
-exports.getInputAsArray = getInputAsArray;
+exports.ActionInputs = ActionInputs;
 
 
 /***/ }),
@@ -168,73 +303,56 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7954));
-const action_1 = __nccwpck_require__(1932);
-const BACKEND_PATHS = 'backend_paths';
-const FRONTEND_PATHS = 'frontend_paths';
-const DOCUMENTATION_PATHS = 'documentation_paths';
-const FRONTEND_TASKS = 'frontend_tasks';
-const BACKEND_TASKS = 'backend_tasks';
-const DOCUMENTATION_TASKS = 'documentation_tasks';
+const changes_1 = __nccwpck_require__(1058);
+const input_1 = __nccwpck_require__(8245);
+const commit_1 = __nccwpck_require__(7185);
+const output_1 = __nccwpck_require__(8059);
+const backend_tags_1 = __nccwpck_require__(3789);
+const tags_1 = __nccwpck_require__(6501);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const options = { required: true };
-            const backendPaths = (0, action_1.getInputAsArray)(BACKEND_PATHS, options);
-            const frontendPaths = (0, action_1.getInputAsArray)(FRONTEND_PATHS, options);
-            const documentationPaths = (0, action_1.getInputAsArray)(DOCUMENTATION_PATHS, options);
+            const inputs = new input_1.ActionInputs();
+            const commitMessage = yield (0, commit_1.getCommitMessage)();
             const needsToRun = {
                 frontend: false,
                 backend: false,
                 docs: false
             };
-            if (yield (0, action_1.shouldRun)()) {
+            const checkPyTestTags = (0, backend_tags_1.usePyTestTagCheck)(commitMessage, needsToRun);
+            const checkForTag = (0, commit_1.useCheckForTag)(commitMessage);
+            if (checkForTag(tags_1.Tag.RUN_ALL)) {
                 needsToRun.frontend = true;
                 needsToRun.backend = true;
                 needsToRun.docs = true;
-                // eslint-disable-next-line no-console
-                console.info(`[run all] detected, running all tasks`);
+                core.info(`[run all] detected, running all tasks`);
             }
-            else if (yield (0, action_1.shouldSkip)()) {
-                // eslint-disable-next-line no-console
-                console.info(`[skip ci] or [ci skip] detected, skipping all tasks`);
+            else if (checkForTag(tags_1.Tag.SKIP_CI) || checkForTag(tags_1.Tag.CI_SKIP)) {
+                core.info(`[skip ci] or [ci skip] detected, skipping all tasks`);
             }
             else {
-                yield (0, action_1.checkForChanges)(files => {
+                yield (0, changes_1.checkForChanges)(files => {
                     if (files === null) {
                         needsToRun.frontend = true;
                         needsToRun.backend = true;
                         needsToRun.docs = true;
                     }
                     else {
-                        // eslint-disable-next-line no-console
-                        console.info(`Checking ${files.length} files of the PR for changes`);
-                        if ((0, action_1.changeDetected)(frontendPaths, files)) {
+                        core.info(`Checking ${files.length} files of the PR for changes`);
+                        if ((0, changes_1.changeDetected)(inputs.frontendPaths, files)) {
                             needsToRun.frontend = true;
                         }
-                        if ((0, action_1.changeDetected)(backendPaths, files)) {
+                        if ((0, changes_1.changeDetected)(inputs.backendPaths, files)) {
                             needsToRun.backend = true;
                         }
-                        if ((0, action_1.changeDetected)(documentationPaths, files)) {
+                        if ((0, changes_1.changeDetected)(inputs.documentationPaths, files)) {
                             needsToRun.docs = true;
                         }
                     }
                 });
             }
-            if (needsToRun.frontend) {
-                // eslint-disable-next-line no-console
-                console.info(`will run frontend job`);
-                core.setOutput(FRONTEND_TASKS, true);
-            }
-            if (needsToRun.backend) {
-                // eslint-disable-next-line no-console
-                console.info(`will run backend job`);
-                core.setOutput(BACKEND_TASKS, true);
-            }
-            if (needsToRun.docs) {
-                // eslint-disable-next-line no-console
-                console.info(`will run docs job`);
-                core.setOutput(DOCUMENTATION_TASKS, true);
-            }
+            checkPyTestTags();
+            (0, output_1.setOutput)(needsToRun);
         }
         catch (error) {
             if (error instanceof Error) {
@@ -247,6 +365,82 @@ function run() {
     });
 }
 run();
+
+
+/***/ }),
+
+/***/ 8059:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.setOutput = void 0;
+const core = __importStar(__nccwpck_require__(7954));
+const FRONTEND_TASKS = 'frontend_tasks';
+const BACKEND_TASKS = 'backend_tasks';
+const DOCUMENTATION_TASKS = 'documentation_tasks';
+const setOutput = (needsToRun) => {
+    if (needsToRun.frontend) {
+        core.info(`will run frontend job`);
+        core.setOutput(FRONTEND_TASKS, true);
+    }
+    if (needsToRun.backend) {
+        core.info(`will run backend job`);
+        core.setOutput(BACKEND_TASKS, true);
+    }
+    if (needsToRun.docs) {
+        core.info(`will run docs job`);
+        core.setOutput(DOCUMENTATION_TASKS, true);
+    }
+};
+exports.setOutput = setOutput;
+
+
+/***/ }),
+
+/***/ 6501:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Tag = exports.PyTag = void 0;
+var PyTag;
+(function (PyTag) {
+    PyTag["SKIP_PYTEST"] = "skip py tests";
+    PyTag["RUN_PY_NFT"] = "run nft py tests";
+    PyTag["RUN_ALL_TEST"] = "run all py tests";
+})(PyTag = exports.PyTag || (exports.PyTag = {}));
+var Tag;
+(function (Tag) {
+    Tag["RUN_ALL"] = "run all";
+    Tag["SKIP_CI"] = "skip ci";
+    Tag["CI_SKIP"] = "ci skip";
+})(Tag = exports.Tag || (exports.Tag = {}));
 
 
 /***/ }),
