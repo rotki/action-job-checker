@@ -1,4 +1,4 @@
-import {changeDetected} from '../src/action'
+import {changeDetected} from '../src/changes'
 
 test('a file matches', () => {
   const monitored = ['rotkehlchen', 'requirements.txt']

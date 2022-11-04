@@ -1,42 +1,33 @@
 import * as core from '@actions/core'
-import {
-  changeDetected,
-  checkForChanges,
-  getInputAsArray,
-  shouldRun,
-  shouldSkip
-} from './action'
-
-const BACKEND_PATHS = 'backend_paths'
-const FRONTEND_PATHS = 'frontend_paths'
-const DOCUMENTATION_PATHS = 'documentation_paths'
-
-const FRONTEND_TASKS = 'frontend_tasks'
-const BACKEND_TASKS = 'backend_tasks'
-const DOCUMENTATION_TASKS = 'documentation_tasks'
+import {changeDetected, checkForChanges} from './changes'
+import {ActionInputs} from './input'
+import {RunList} from './types'
+import {getCommitMessage, useCheckForTag} from './commit'
+import {setOutput} from './output'
+import {usePyTestTagCheck} from './backend-tags'
+import {Tag} from './tags'
 
 async function run(): Promise<void> {
   try {
-    const options = {required: true}
-    const backendPaths = getInputAsArray(BACKEND_PATHS, options)
-    const frontendPaths = getInputAsArray(FRONTEND_PATHS, options)
-    const documentationPaths = getInputAsArray(DOCUMENTATION_PATHS, options)
+    const inputs = new ActionInputs()
+    const commitMessage = await getCommitMessage()
 
-    const needsToRun = {
+    const needsToRun: RunList = {
       frontend: false,
       backend: false,
       docs: false
     }
 
-    if (await shouldRun()) {
+    const checkPyTestTags = usePyTestTagCheck(commitMessage, needsToRun)
+    const checkForTag = useCheckForTag(commitMessage)
+
+    if (checkForTag(Tag.RUN_ALL)) {
       needsToRun.frontend = true
       needsToRun.backend = true
       needsToRun.docs = true
-      // eslint-disable-next-line no-console
-      console.info(`[run all] detected, running all tasks`)
-    } else if (await shouldSkip()) {
-      // eslint-disable-next-line no-console
-      console.info(`[skip ci] or [ci skip] detected, skipping all tasks`)
+      core.info(`[run all] detected, running all tasks`)
+    } else if (checkForTag(Tag.SKIP_CI) || checkForTag(Tag.CI_SKIP)) {
+      core.info(`[skip ci] or [ci skip] detected, skipping all tasks`)
     } else {
       await checkForChanges(files => {
         if (files === null) {
@@ -44,38 +35,22 @@ async function run(): Promise<void> {
           needsToRun.backend = true
           needsToRun.docs = true
         } else {
-          // eslint-disable-next-line no-console
-          console.info(`Checking ${files.length} files of the PR for changes`)
-          if (changeDetected(frontendPaths, files)) {
+          core.info(`Checking ${files.length} files of the PR for changes`)
+          if (changeDetected(inputs.frontendPaths, files)) {
             needsToRun.frontend = true
           }
-          if (changeDetected(backendPaths, files)) {
+          if (changeDetected(inputs.backendPaths, files)) {
             needsToRun.backend = true
           }
-          if (changeDetected(documentationPaths, files)) {
+          if (changeDetected(inputs.documentationPaths, files)) {
             needsToRun.docs = true
           }
         }
       })
     }
 
-    if (needsToRun.frontend) {
-      // eslint-disable-next-line no-console
-      console.info(`will run frontend job`)
-      core.setOutput(FRONTEND_TASKS, true)
-    }
-
-    if (needsToRun.backend) {
-      // eslint-disable-next-line no-console
-      console.info(`will run backend job`)
-      core.setOutput(BACKEND_TASKS, true)
-    }
-
-    if (needsToRun.docs) {
-      // eslint-disable-next-line no-console
-      console.info(`will run docs job`)
-      core.setOutput(DOCUMENTATION_TASKS, true)
-    }
+    checkPyTestTags()
+    setOutput(needsToRun)
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message)
