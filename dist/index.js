@@ -34,7 +34,7 @@ exports.usePyTestTagCheck = void 0;
 const commit_1 = __nccwpck_require__(7185);
 const core = __importStar(__nccwpck_require__(7954));
 const tags_1 = __nccwpck_require__(6501);
-const ENV_VAR_TEST_ENVIRONMENT = 'TEST_ENVIRONMENT';
+const OUTPUT_TEST_ENVIRONMENT = 'test_environment';
 const ENV_NFTS = 'nfts';
 const ENV_NIGHTLY = 'nightly';
 const usePyTestTagCheck = (commitMessage, needsToRun) => {
@@ -46,10 +46,12 @@ const usePyTestTagCheck = (commitMessage, needsToRun) => {
         }
         else {
             if (checkForTag(tags_1.PyTag.RUN_PY_NFT)) {
-                core.exportVariable(ENV_VAR_TEST_ENVIRONMENT, ENV_NFTS);
+                core.setOutput(OUTPUT_TEST_ENVIRONMENT, ENV_NFTS);
+                core.info(`[${tags_1.PyTag.RUN_PY_NFT}] => ${OUTPUT_TEST_ENVIRONMENT}=${ENV_NFTS}`);
             }
             else if (checkForTag(tags_1.PyTag.RUN_ALL_TEST)) {
-                core.exportVariable(ENV_VAR_TEST_ENVIRONMENT, ENV_NIGHTLY);
+                core.setOutput(OUTPUT_TEST_ENVIRONMENT, ENV_NIGHTLY);
+                core.info(`[${tags_1.PyTag.RUN_ALL_TEST}] => ${OUTPUT_TEST_ENVIRONMENT}=${ENV_NIGHTLY}`);
             }
         }
     };

@@ -35,7 +35,7 @@ jobs:
             test
       - name: Echo plugin output
         run: | 
-          echo "TEST_ENVIRONMENT: $TEST_ENVIRONMENT"
+          echo "test_environment: ${{ steps.test.outputs.test_environment }}"
           echo "frontend_tasks: ${{ steps.test.outputs.frontend_tasks }}"
           echo "documentation_tasks: ${{ steps.test.outputs.documentation_tasks }}"
           echo "backend_tasks: ${{ steps.test.outputs.backend_tasks }}"
