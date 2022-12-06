@@ -49,6 +49,14 @@ You use the output of the job in other jobs to enable disable running after push
      ...
 ```
 
+#### Outputs
+The action has the following outputs:
+
+- **frontend_tasks**: boolean
+- **backend_tasks**: boolean
+- **documentation_tasks**: boolean
+- **test_environment**: string (**''** | **nfts** | **nightly**)
+
 ## Commit message support
 
 ### General
@@ -61,5 +69,5 @@ The action supports the following commit message flags:
 ### Backend
 
 - `[skip py tests]` will not run the python backend tests regardless of the change status of the monitored directory.
-- `[run nft py tests]` will set the `TEST_ENVIRONMENT` environment flag to `nft`.
-- `[run all py tests]` will set the `TEST_ENVIRONMENT` environment flag to `nightly`
+- `[run nft py tests]` will set the `test_environment` output to `nft`.
+- `[run all py tests]` will set the `test_environment` output flag to `nightly`
