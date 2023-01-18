@@ -1,6 +1,109 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 5580:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.checkRequiredTasks = void 0;
+const commit_1 = __nccwpck_require__(714);
+const tags_1 = __nccwpck_require__(7473);
+const core = __importStar(__nccwpck_require__(8686));
+const changes_1 = __nccwpck_require__(841);
+function checkRequiredTasks(commitMessage, inputs) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const needsToRun = {
+            frontend: false,
+            e2e: false,
+            backend: false,
+            docs: false
+        };
+        const checkForTag = (0, commit_1.useCheckForTag)(commitMessage);
+        if (checkForTag(tags_1.Tag.RUN_ALL)) {
+            needsToRun.frontend = true;
+            needsToRun.backend = true;
+            needsToRun.e2e = true;
+            needsToRun.docs = true;
+            core.info(`[${tags_1.Tag.RUN_ALL}] detected, running all tasks`);
+        }
+        else if (checkForTag(tags_1.Tag.SKIP_CI) || checkForTag(tags_1.Tag.CI_SKIP)) {
+            core.info(`[${tags_1.Tag.SKIP_CI}] or [${tags_1.Tag.CI_SKIP}] detected, skipping all tasks`);
+        }
+        else if (checkForTag(tags_1.Tag.RUN_E2E)) {
+            core.info(`[${tags_1.Tag.RUN_E2E}] detected, running e2e`);
+            needsToRun.e2e = true;
+        }
+        else if (checkForTag(tags_1.Tag.RUN_FRONTEND)) {
+            core.info(`[${tags_1.Tag.RUN_FRONTEND}] detected, running frontend tasks`);
+            needsToRun.e2e = true;
+            needsToRun.frontend = true;
+        }
+        else {
+            yield (0, changes_1.checkForChanges)(files => {
+                if (files === null) {
+                    needsToRun.frontend = true;
+                    needsToRun.e2e = true;
+                    needsToRun.backend = true;
+                    needsToRun.docs = true;
+                }
+                else {
+                    core.info(`Checking ${files.length} files of the PR for changes`);
+                    if ((0, changes_1.changeDetected)(inputs.frontendPaths, files)) {
+                        needsToRun.frontend = true;
+                        needsToRun.e2e = true;
+                    }
+                    if ((0, changes_1.changeDetected)(inputs.backendPaths, files)) {
+                        needsToRun.backend = true;
+                        needsToRun.e2e = true;
+                    }
+                    if ((0, changes_1.changeDetected)(inputs.documentationPaths, files)) {
+                        needsToRun.docs = true;
+                    }
+                }
+            });
+        }
+        return needsToRun;
+    });
+}
+exports.checkRequiredTasks = checkRequiredTasks;
+
+
+/***/ }),
+
 /***/ 896:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -312,54 +415,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(8686));
-const changes_1 = __nccwpck_require__(841);
 const input_1 = __nccwpck_require__(3175);
 const commit_1 = __nccwpck_require__(714);
 const output_1 = __nccwpck_require__(7081);
 const backend_tags_1 = __nccwpck_require__(896);
-const tags_1 = __nccwpck_require__(7473);
+const action_1 = __nccwpck_require__(5580);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const inputs = new input_1.ActionInputs();
             const commitMessage = yield (0, commit_1.getCommitMessage)();
-            const needsToRun = {
-                frontend: false,
-                backend: false,
-                docs: false
-            };
+            const needsToRun = yield (0, action_1.checkRequiredTasks)(commitMessage, inputs);
             const checkPyTestTags = (0, backend_tags_1.usePyTestTagCheck)(commitMessage, needsToRun);
-            const checkForTag = (0, commit_1.useCheckForTag)(commitMessage);
-            if (checkForTag(tags_1.Tag.RUN_ALL)) {
-                needsToRun.frontend = true;
-                needsToRun.backend = true;
-                needsToRun.docs = true;
-                core.info(`[run all] detected, running all tasks`);
-            }
-            else if (checkForTag(tags_1.Tag.SKIP_CI) || checkForTag(tags_1.Tag.CI_SKIP)) {
-                core.info(`[skip ci] or [ci skip] detected, skipping all tasks`);
-            }
-            else {
-                yield (0, changes_1.checkForChanges)(files => {
-                    if (files === null) {
-                        needsToRun.frontend = true;
-                        needsToRun.backend = true;
-                        needsToRun.docs = true;
-                    }
-                    else {
-                        core.info(`Checking ${files.length} files of the PR for changes`);
-                        if ((0, changes_1.changeDetected)(inputs.frontendPaths, files)) {
-                            needsToRun.frontend = true;
-                        }
-                        if ((0, changes_1.changeDetected)(inputs.backendPaths, files)) {
-                            needsToRun.backend = true;
-                        }
-                        if ((0, changes_1.changeDetected)(inputs.documentationPaths, files)) {
-                            needsToRun.docs = true;
-                        }
-                    }
-                });
-            }
             checkPyTestTags();
             (0, output_1.setOutput)(needsToRun);
         }
@@ -409,21 +476,28 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.setOutput = void 0;
 const core = __importStar(__nccwpck_require__(8686));
-const FRONTEND_TASKS = 'frontend_tasks';
-const BACKEND_TASKS = 'backend_tasks';
-const DOCUMENTATION_TASKS = 'documentation_tasks';
+const Output = {
+    FRONTEND: 'frontend_tasks',
+    E2E: 'e2e_tasks',
+    BACKEND: 'backend_tasks',
+    DOCUMENTATION: 'documentation_tasks'
+};
 const setOutput = (needsToRun) => {
     if (needsToRun.frontend) {
         core.info(`will run frontend job`);
-        core.setOutput(FRONTEND_TASKS, true);
+        core.setOutput(Output.FRONTEND, true);
+    }
+    if (needsToRun.e2e) {
+        core.info('will run e2e job');
+        core.setOutput(Output.E2E, true);
     }
     if (needsToRun.backend) {
         core.info(`will run backend job`);
-        core.setOutput(BACKEND_TASKS, true);
+        core.setOutput(Output.BACKEND, true);
     }
     if (needsToRun.docs) {
         core.info(`will run docs job`);
-        core.setOutput(DOCUMENTATION_TASKS, true);
+        core.setOutput(Output.DOCUMENTATION, true);
     }
 };
 exports.setOutput = setOutput;
@@ -438,18 +512,18 @@ exports.setOutput = setOutput;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Tag = exports.PyTag = void 0;
-var PyTag;
-(function (PyTag) {
-    PyTag["SKIP_PYTEST"] = "skip py tests";
-    PyTag["RUN_PY_NFT"] = "run nft py tests";
-    PyTag["RUN_ALL_TEST"] = "run all py tests";
-})(PyTag = exports.PyTag || (exports.PyTag = {}));
-var Tag;
-(function (Tag) {
-    Tag["RUN_ALL"] = "run all";
-    Tag["SKIP_CI"] = "skip ci";
-    Tag["CI_SKIP"] = "ci skip";
-})(Tag = exports.Tag || (exports.Tag = {}));
+exports.PyTag = {
+    SKIP_PYTEST: 'skip py tests',
+    RUN_PY_NFT: 'run nft py tests',
+    RUN_ALL_TEST: 'run all py tests'
+};
+exports.Tag = {
+    RUN_ALL: 'run all',
+    RUN_E2E: 'run e2e',
+    RUN_FRONTEND: 'run frontend',
+    SKIP_CI: 'skip ci',
+    CI_SKIP: 'ci skip'
+};
 
 
 /***/ }),
