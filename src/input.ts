@@ -1,6 +1,12 @@
 import * as core from '@actions/core'
 
-export class ActionInputs {
+export interface IActionInputs {
+  readonly backendPaths: string[]
+  readonly frontendPaths: string[]
+  readonly documentationPaths: string[]
+}
+
+export class ActionInputs implements IActionInputs {
   readonly backendPaths: string[]
   readonly frontendPaths: string[]
   readonly documentationPaths: string[]

@@ -53,6 +53,7 @@ You use the output of the job in other jobs to enable disable running after push
 The action has the following outputs:
 
 - **frontend_tasks**: boolean
+- **e2e_tasks**: boolean
 - **backend_tasks**: boolean
 - **documentation_tasks**: boolean
 - **test_environment**: string (**''** | **nfts** | **nightly**)
@@ -65,7 +66,8 @@ The action supports the following commit message flags:
 
 - `[run all]` will run all the jobs regardless of the change status of a monitored directory.
 - `[skip ci]` or `[ci skip]` will not run any of the jobs regardless of the change status of the monitoring directory.
-
+- `[run e2e]` will run only the e2e test suite
+- `[run frontend]` will run only the frontend tasks (including e2e)
 ### Backend
 
 - `[skip py tests]` will not run the python backend tests regardless of the change status of the monitored directory.
