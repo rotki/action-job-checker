@@ -4,7 +4,7 @@
   "private": true,
   "description": "Checks which jobs are ",
   "main": "lib/main.js",
-  "packageManager": "pnpm@7.25.0",
+  "packageManager": "pnpm@8.1.0",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write **/*.ts",
@@ -41,5 +41,9 @@
     "prettier": "2.8.7",
     "ts-jest": "29.0.5",
     "typescript": "4.9.5"
+  },
+  "engines": {
+    "node": ">=16 <18",
+    "pnpm": ">=8 <9"
   }
 }
