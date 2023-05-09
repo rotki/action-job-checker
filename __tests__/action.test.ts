@@ -1,7 +1,7 @@
-import { Tag, Tags } from '../src/tags';
-import { IActionInputs } from '../src/input';
+import { Tag, type Tags } from '../src/tags';
+import { type IActionInputs } from '../src/input';
 import { checkRequiredTasks } from '../src/action';
-import { RunList } from '../src/types';
+import { type RunList } from '../src/types';
 
 const generateCommit = (tag: Tags | '' = ''): string => {
   const commitTag = tag ? `[${tag}]` : '';

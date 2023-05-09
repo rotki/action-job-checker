@@ -1,4 +1,4 @@
-name: 'Build'
+name: Build
 on: # rebuild any PRs and main branch changes
   pull_request:
   push:
@@ -7,17 +7,83 @@ on: # rebuild any PRs and main branch changes
       - 'releases/*'
 
 jobs:
+  commit-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate current commit (last commit) with commitlint
+        if: github.event_name == 'push'
+        run: pnpm exec commitlint --from HEAD~1 --to HEAD --verbose
+
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v3
+      - name: Checkout 🛎
+        uses: actions/checkout@v3
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v3
         with:
-          node-version: 16.x
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm run all
+          node-version-file: .nvmrc
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and check
+        run: pnpm run all
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +100,7 @@ jobs:
           frontend_paths: |
             test
       - name: Echo plugin output
-        run: | 
+        run: |
           echo "test_environment: ${{ steps.test.outputs.test_environment }}"
           echo "frontend_tasks: ${{ steps.test.outputs.frontend_tasks }}"
           echo "documentation_tasks: ${{ steps.test.outputs.documentation_tasks }}"

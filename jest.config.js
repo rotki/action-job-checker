@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-commonjs
 module.exports = {
   clearMocks: true,
   moduleFileExtensions: ['js', 'ts'],
@@ -5,7 +6,7 @@ module.exports = {
   testMatch: ['**/*.test.ts'],
   testRunner: 'jest-circus/runner',
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.ts$': 'ts-jest',
   },
-  verbose: true
-}
+  verbose: true,
+};

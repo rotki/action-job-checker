@@ -12,7 +12,7 @@ for this folder.
 You setup the job checker in the following way:
 ```yaml
   check-changes:
-    name: 'Required job check'
+    name: Required job check
     runs-on: ubuntu-latest
     outputs:
       backend_tasks: ${{ steps.checker.outputs.backend_tasks }}
@@ -41,8 +41,8 @@ You use the output of the job in other jobs to enable disable running after push
 
 ```yaml
   lint-frontend:
-    name: 'Frontend lint'
-    needs: ['check-changes']
+    name: Frontend lint
+    needs: [check-changes]
     if: ${{ needs.check-changes.outputs.frontend_tasks }}
     runs-on: ubuntu-latest
     steps:
