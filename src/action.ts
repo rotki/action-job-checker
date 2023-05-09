@@ -48,7 +48,6 @@ export async function checkRequiredTasks(
         }
         if (changeDetected(inputs.backendPaths, files)) {
           needsToRun.backend = true;
-          needsToRun.e2e = true;
         }
         if (changeDetected(inputs.documentationPaths, files)) {
           needsToRun.docs = true;

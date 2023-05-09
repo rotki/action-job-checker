@@ -65,7 +65,6 @@ function checkRequiredTasks(commitMessage, inputs) {
                     }
                     if ((0, changes_1.changeDetected)(inputs.backendPaths, files)) {
                         needsToRun.backend = true;
-                        needsToRun.e2e = true;
                     }
                     if ((0, changes_1.changeDetected)(inputs.documentationPaths, files)) {
                         needsToRun.docs = true;
