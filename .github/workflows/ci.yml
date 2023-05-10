@@ -94,14 +94,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           documentation_paths: |
-            test
+            ./
           backend_paths: |
-            test
+            ./
           frontend_paths: |
-            test
+            ./
       - name: Echo plugin output
         run: |
           echo "test_environment: ${{ steps.test.outputs.test_environment }}"
           echo "frontend_tasks: ${{ steps.test.outputs.frontend_tasks }}"
           echo "documentation_tasks: ${{ steps.test.outputs.documentation_tasks }}"
           echo "backend_tasks: ${{ steps.test.outputs.backend_tasks }}"
+          echo "e2e_tasks: ${{ steps.test.outputs.e2e_tasks }}"

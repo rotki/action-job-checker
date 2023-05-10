@@ -24,6 +24,8 @@ outputs:
     description: Documentation tasks should run
   e2e_tasks:
     description: E2E tasks should run
+  test_environment:
+    description: nft | nightly | ''
 
 runs:
   using: node16
