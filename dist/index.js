@@ -358,7 +358,7 @@ function run() {
             const needsToRun = yield (0, action_1.checkRequiredTasks)(commitMessage, inputs);
             const checkPyTestTags = (0, backend_tags_1.usePyTestTagCheck)(commitMessage, needsToRun);
             checkPyTestTags();
-            (0, output_1.setActionOutput)(needsToRun);
+            yield (0, output_1.setActionOutput)(needsToRun);
         }
         catch (error) {
             if (error instanceof Error) {
@@ -377,10 +377,19 @@ run();
 /***/ }),
 
 /***/ 764:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.setActionOutput = void 0;
 const core_1 = __nccwpck_require__(7733);
@@ -390,24 +399,46 @@ const Output = {
     BACKEND: 'backend_tasks',
     DOCUMENTATION: 'documentation_tasks',
 };
-const setActionOutput = (needsToRun) => {
+const getStatus = (run) => {
+    if (run) {
+        return 'Run';
+    }
+    return 'Skipped';
+};
+const setActionOutput = (needsToRun) => __awaiter(void 0, void 0, void 0, function* () {
     if (needsToRun.frontend) {
         (0, core_1.info)(`will run frontend job`);
         (0, core_1.setOutput)(Output.FRONTEND, true);
-    }
-    if (needsToRun.e2e) {
-        (0, core_1.info)('will run e2e job');
-        (0, core_1.setOutput)(Output.E2E, true);
     }
     if (needsToRun.backend) {
         (0, core_1.info)(`will run backend job`);
         (0, core_1.setOutput)(Output.BACKEND, true);
     }
+    if (needsToRun.e2e) {
+        (0, core_1.info)('will run e2e job');
+        (0, core_1.setOutput)(Output.E2E, true);
+    }
     if (needsToRun.docs) {
         (0, core_1.info)(`will run docs job`);
         (0, core_1.setOutput)(Output.DOCUMENTATION, true);
     }
-};
+    yield core_1.summary
+        .addTable([
+        [
+            { data: 'Frontend', header: true },
+            { data: 'Backend', header: true },
+            { data: 'E2E', header: true },
+            { data: 'Documentation', header: true },
+        ],
+        [
+            getStatus(needsToRun.frontend),
+            getStatus(needsToRun.backend),
+            getStatus(needsToRun.e2e),
+            getStatus(needsToRun.docs),
+        ],
+    ])
+        .write();
+});
 exports.setActionOutput = setActionOutput;
 
 

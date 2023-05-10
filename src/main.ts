@@ -12,7 +12,7 @@ async function run(): Promise<void> {
     const needsToRun = await checkRequiredTasks(commitMessage, inputs);
     const checkPyTestTags = usePyTestTagCheck(commitMessage, needsToRun);
     checkPyTestTags();
-    setActionOutput(needsToRun);
+    await setActionOutput(needsToRun);
   } catch (error) {
     if (error instanceof Error) {
       setFailed(error.message);
