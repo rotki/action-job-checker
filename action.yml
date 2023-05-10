@@ -17,11 +17,13 @@ inputs:
 
 outputs:
   backend_tasks:
-    description: Backend tasks should be executed
+    description: Backend tasks should run
   frontend_tasks:
-    description: Frontend tasks should be executed
+    description: Frontend tasks should run
   documentation_tasks:
-    description: Documentation tasks should be executed
+    description: Documentation tasks should run
+  e2e_tasks:
+    description: E2E tasks should run
 
 runs:
   using: node16
