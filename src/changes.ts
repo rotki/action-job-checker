@@ -2,7 +2,7 @@ import { getInput, info } from '@actions/core';
 import * as github from '@actions/github';
 
 export const checkForChanges = async (
-  check: (files: string[] | null) => void
+  check: (files: string[] | null) => void,
 ): Promise<void> => {
   const token = getInput('token', { required: true });
   const client = github.getOctokit(token);
@@ -20,7 +20,7 @@ export const checkForChanges = async (
       ...context.repo,
       // eslint-disable-next-line camelcase
       pull_number: number,
-    }
+    },
   )) {
     check(response.data.map((value) => value.filename));
   }
@@ -28,7 +28,7 @@ export const checkForChanges = async (
 
 export const changeDetected = (
   monitored: string[],
-  changed: string[]
+  changed: string[],
 ): boolean => {
   for (const path of monitored) {
     for (const detected of changed) {

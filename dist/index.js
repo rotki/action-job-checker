@@ -177,16 +177,11 @@ const checkForChanges = (check) => __awaiter(void 0, void 0, void 0, function* (
     try {
         for (var _d = true, _e = __asyncValues(client.paginate.iterator(client.rest.pulls.listFiles, Object.assign(Object.assign({}, context.repo), { 
             // eslint-disable-next-line camelcase
-            pull_number: number }))), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+            pull_number: number }))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
             _c = _f.value;
             _d = false;
-            try {
-                const response = _c;
-                check(response.data.map((value) => value.filename));
-            }
-            finally {
-                _d = true;
-            }
+            const response = _c;
+            check(response.data.map((value) => value.filename));
         }
     }
     catch (e_1_1) { e_1 = { error: e_1_1 }; }

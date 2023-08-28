@@ -15,4 +15,5 @@ export const Tag = {
 type Tag = (typeof Tag)[keyof typeof Tag];
 
 type PyTag = (typeof PyTag)[keyof typeof PyTag];
+
 export type Tags = Tag | PyTag;

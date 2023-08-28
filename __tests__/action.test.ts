@@ -19,7 +19,7 @@ const generateInputs = (): IActionInputs => ({
 
 test('[run e2e] will only run e2e', async () => {
   expect(
-    await checkRequiredTasks(generateCommit(Tag.RUN_E2E), generateInputs())
+    await checkRequiredTasks(generateCommit(Tag.RUN_E2E), generateInputs()),
   ).toMatchObject({
     frontend: false,
     e2e: true,
@@ -30,7 +30,7 @@ test('[run e2e] will only run e2e', async () => {
 
 test('[run all] will only run all tasks', async () => {
   expect(
-    await checkRequiredTasks(generateCommit(Tag.RUN_ALL), generateInputs())
+    await checkRequiredTasks(generateCommit(Tag.RUN_ALL), generateInputs()),
   ).toMatchObject({
     frontend: true,
     e2e: true,
@@ -41,7 +41,10 @@ test('[run all] will only run all tasks', async () => {
 
 test('[run frontend] will only run frontend tasks', async () => {
   expect(
-    await checkRequiredTasks(generateCommit(Tag.RUN_FRONTEND), generateInputs())
+    await checkRequiredTasks(
+      generateCommit(Tag.RUN_FRONTEND),
+      generateInputs(),
+    ),
   ).toMatchObject({
     frontend: true,
     e2e: true,
@@ -52,7 +55,7 @@ test('[run frontend] will only run frontend tasks', async () => {
 
 test('[skip ci] will only run nothing', async () => {
   expect(
-    await checkRequiredTasks(generateCommit(Tag.SKIP_CI), generateInputs())
+    await checkRequiredTasks(generateCommit(Tag.SKIP_CI), generateInputs()),
   ).toMatchObject({
     frontend: false,
     e2e: false,
@@ -63,7 +66,7 @@ test('[skip ci] will only run nothing', async () => {
 
 test('[ci skip] will only run nothing', async () => {
   expect(
-    await checkRequiredTasks(generateCommit(Tag.CI_SKIP), generateInputs())
+    await checkRequiredTasks(generateCommit(Tag.CI_SKIP), generateInputs()),
   ).toMatchObject({
     frontend: false,
     e2e: false,

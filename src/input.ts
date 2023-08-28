@@ -22,13 +22,13 @@ export class ActionInputs implements IActionInputs {
     this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
     this.documentationPaths = this.getInputAsArray(
       DOCUMENTATION_PATHS,
-      options
+      options,
     );
   }
 
   private getInputAsArray = (
     name: string,
-    options?: core.InputOptions
+    options?: core.InputOptions,
   ): string[] =>
     core
       .getInput(name, options)

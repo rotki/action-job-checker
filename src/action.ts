@@ -7,7 +7,7 @@ import { changeDetected, checkForChanges } from './changes';
 
 export async function checkRequiredTasks(
   commitMessage: string | null,
-  inputs: IActionInputs
+  inputs: IActionInputs,
 ): Promise<RunList> {
   const needsToRun: RunList = {
     frontend: false,

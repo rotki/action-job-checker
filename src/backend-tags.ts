@@ -9,8 +9,8 @@ const ENV_NIGHTLY = 'nightly';
 
 export const usePyTestTagCheck = (
   commitMessage: CommitMessage,
-  needsToRun: RunList
-): Function => {
+  needsToRun: RunList,
+): (() => void) => {
   const checkForTag = useCheckForTag(commitMessage);
   return (): void => {
     if (checkForTag(PyTag.SKIP_PYTEST)) {
@@ -22,7 +22,7 @@ export const usePyTestTagCheck = (
     } else if (checkForTag(PyTag.RUN_ALL_TEST)) {
       setOutput(OUTPUT_TEST_ENVIRONMENT, ENV_NIGHTLY);
       info(
-        `[${PyTag.RUN_ALL_TEST}] => ${OUTPUT_TEST_ENVIRONMENT}=${ENV_NIGHTLY}`
+        `[${PyTag.RUN_ALL_TEST}] => ${OUTPUT_TEST_ENVIRONMENT}=${ENV_NIGHTLY}`,
       );
     }
   };
