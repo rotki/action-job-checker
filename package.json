@@ -31,7 +31,7 @@
     "@commitlint/config-conventional": "17.7.0",
     "@rotki/eslint-config": "1.1.1",
     "@types/jest": "29.5.4",
-    "@types/node": "16.18.27",
+    "@types/node": "20.9.2",
     "@vercel/ncc": "0.36.1",
     "bumpp": "9.2.0",
     "eslint": "8.48.0",
@@ -47,7 +47,7 @@
     "typescript": "5.1.6"
   },
   "engines": {
-    "node": ">=16 <18",
+    "node": ">=20 <21",
     "pnpm": ">=8 <9"
   },
   "lint-staged": {
