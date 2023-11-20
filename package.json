@@ -23,28 +23,28 @@
     "release": "bumpp --no-push"
   },
   "dependencies": {
-    "@actions/core": "1.10.0",
-    "@actions/github": "5.1.1"
+    "@actions/core": "1.10.1",
+    "@actions/github": "6.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "17.7.1",
-    "@commitlint/config-conventional": "17.7.0",
-    "@rotki/eslint-config": "1.1.1",
-    "@types/jest": "29.5.4",
+    "@commitlint/cli": "18.4.2",
+    "@commitlint/config-conventional": "18.4.2",
+    "@rotki/eslint-config": "1.1.2",
+    "@types/jest": "29.5.8",
     "@types/node": "20.9.2",
-    "@vercel/ncc": "0.36.1",
+    "@vercel/ncc": "0.38.1",
     "bumpp": "9.2.0",
-    "eslint": "8.48.0",
-    "eslint-plugin-github": "4.9.2",
-    "eslint-plugin-jest": "27.2.3",
+    "eslint": "8.54.0",
+    "eslint-plugin-github": "4.10.1",
+    "eslint-plugin-jest": "27.6.0",
     "husky": "8.0.3",
-    "jest": "29.6.4",
-    "jest-circus": "29.6.4",
+    "jest": "29.7.0",
+    "jest-circus": "29.7.0",
     "js-yaml": "4.1.0",
-    "lint-staged": "14.0.1",
-    "prettier": "3.0.2",
+    "lint-staged": "15.1.0",
+    "prettier": "3.1.0",
     "ts-jest": "29.1.1",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   },
   "engines": {
     "node": ">=20 <21",
