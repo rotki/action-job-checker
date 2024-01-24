@@ -13,14 +13,14 @@ async function run(): Promise<void> {
     const checkPyTestTags = usePyTestTagCheck(commitMessage, needsToRun);
     checkPyTestTags();
     await setActionOutput(needsToRun);
-  } catch (error) {
-    if (error instanceof Error) {
+  }
+  catch (error) {
+    if (error instanceof Error)
       setFailed(error.message);
-    } else {
+    else
       setFailed('unknown error');
-    }
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
+// eslint-disable-next-line @typescript-eslint/no-floating-promises, unicorn/prefer-top-level-await
 run();

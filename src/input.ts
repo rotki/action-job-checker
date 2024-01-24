@@ -33,6 +33,6 @@ export class ActionInputs implements IActionInputs {
     core
       .getInput(name, options)
       .split('\n')
-      .map((s) => s.trim())
-      .filter((x) => x !== '');
+      .map(s => s.trim())
+      .filter(x => x !== '');
 }

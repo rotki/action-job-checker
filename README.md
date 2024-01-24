@@ -10,46 +10,48 @@ for this folder.
 ### Basic
 
 You setup the job checker in the following way:
+
 ```yaml
-  check-changes:
-    name: Required job check
-    runs-on: ubuntu-latest
-    outputs:
-      backend_tasks: ${{ steps.checker.outputs.backend_tasks }}
-      frontend_tasks: ${{ steps.checker.outputs.frontend_tasks }}
-      documentation_tasks: ${{ steps.checker.outputs.documentation_tasks }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Run check action
-        uses: rotki/action-job-checker@v1
-        id: checker
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          documentation_paths: |
-            docs
-          backend_paths: |
-            rotkehlchen
-            requirements.txt
-            requirements_dev.txt
-            requirements_lint.txt
-          frontend_paths: |
-            frontend/app
+check-changes:
+  name: Required job check
+  runs-on: ubuntu-latest
+  outputs:
+    backend_tasks: ${{ steps.checker.outputs.backend_tasks }}
+    frontend_tasks: ${{ steps.checker.outputs.frontend_tasks }}
+    documentation_tasks: ${{ steps.checker.outputs.documentation_tasks }}
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Run check action
+      uses: rotki/action-job-checker@v1
+      id: checker
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        documentation_paths: |
+          docs
+        backend_paths: |
+          rotkehlchen
+          requirements.txt
+          requirements_dev.txt
+          requirements_lint.txt
+        frontend_paths: |
+          frontend/app
 ```
 
 You use the output of the job in other jobs to enable disable running after push.
 
 ```yaml
-  lint-frontend:
-    name: Frontend lint
-    needs: [check-changes]
-    if: ${{ needs.check-changes.outputs.frontend_tasks }}
-    runs-on: ubuntu-latest
-    steps:
-     ...
+lint-frontend:
+  name: Frontend lint
+  needs: [check-changes]
+  if: ${{ needs.check-changes.outputs.frontend_tasks }}
+  runs-on: ubuntu-latest
+  steps:
+    ...
 ```
 
 #### Outputs
+
 The action has the following outputs:
 
 - **frontend_tasks**: boolean
@@ -68,6 +70,7 @@ The action supports the following commit message flags:
 - `[skip ci]` or `[ci skip]` will not run any of the jobs regardless of the change status of the monitoring directory.
 - `[run e2e]` will run only the e2e test suite
 - `[run frontend]` will run only the frontend tasks (including e2e)
+
 ### Backend
 
 - `[skip py tests]` will not run the python backend tests regardless of the change status of the monitored directory.

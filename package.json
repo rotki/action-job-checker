@@ -2,7 +2,7 @@
   "name": "job-checker",
   "version": "3.0.0",
   "private": true,
-  "packageManager": "pnpm@8.3.1",
+  "packageManager": "pnpm@8.14.3",
   "description": "Checks which jobs are ",
   "keywords": [
     "actions",
@@ -17,7 +17,7 @@
     "lint:fix": "eslint . --fix",
     "package": "ncc build --source-map --license licenses.txt",
     "preinstall": "npx only-allow pnpm",
-    "test": "jest",
+    "test": "vitest",
     "all": "pnpm run build && pnpm run lint && pnpm run package && pnpm run test",
     "prepare": "husky install",
     "release": "bumpp --no-push"
@@ -27,24 +27,20 @@
     "@actions/github": "6.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "18.4.2",
-    "@commitlint/config-conventional": "18.4.2",
-    "@rotki/eslint-config": "1.1.2",
-    "@types/jest": "29.5.8",
-    "@types/node": "20.9.2",
+    "@commitlint/cli": "18.5.0",
+    "@commitlint/config-conventional": "18.5.0",
+    "@rotki/eslint-config": "2.4.4",
+    "@types/node": "20.11.6",
     "@vercel/ncc": "0.38.1",
-    "bumpp": "9.2.0",
-    "eslint": "8.54.0",
+    "bumpp": "9.3.0",
+    "eslint": "8.56.0",
     "eslint-plugin-github": "4.10.1",
-    "eslint-plugin-jest": "27.6.0",
     "husky": "8.0.3",
-    "jest": "29.7.0",
-    "jest-circus": "29.7.0",
     "js-yaml": "4.1.0",
-    "lint-staged": "15.1.0",
-    "prettier": "3.1.0",
-    "ts-jest": "29.1.1",
-    "typescript": "5.2.2"
+    "lint-staged": "15.2.0",
+    "prettier": "3.2.4",
+    "typescript": "5.3.3",
+    "vitest": "1.2.1"
   },
   "engines": {
     "node": ">=20 <21",

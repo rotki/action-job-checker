@@ -63,12 +63,10 @@ function checkRequiredTasks(commitMessage, inputs) {
                         needsToRun.frontend = true;
                         needsToRun.e2e = true;
                     }
-                    if ((0, changes_1.changeDetected)(inputs.backendPaths, files)) {
+                    if ((0, changes_1.changeDetected)(inputs.backendPaths, files))
                         needsToRun.backend = true;
-                    }
-                    if ((0, changes_1.changeDetected)(inputs.documentationPaths, files)) {
+                    if ((0, changes_1.changeDetected)(inputs.documentationPaths, files))
                         needsToRun.docs = true;
-                    }
                 }
             });
         }
@@ -93,7 +91,7 @@ const tags_1 = __nccwpck_require__(3442);
 const OUTPUT_TEST_ENVIRONMENT = 'test_environment';
 const ENV_NFTS = 'nfts';
 const ENV_NIGHTLY = 'nightly';
-const usePyTestTagCheck = (commitMessage, needsToRun) => {
+function usePyTestTagCheck(commitMessage, needsToRun) {
     const checkForTag = (0, commit_1.useCheckForTag)(commitMessage);
     return () => {
         if (checkForTag(tags_1.PyTag.SKIP_PYTEST)) {
@@ -109,7 +107,7 @@ const usePyTestTagCheck = (commitMessage, needsToRun) => {
             (0, core_1.info)(`[${tags_1.PyTag.RUN_ALL_TEST}] => ${OUTPUT_TEST_ENVIRONMENT}=${ENV_NIGHTLY}`);
         }
     };
-};
+}
 exports.usePyTestTagCheck = usePyTestTagCheck;
 
 
@@ -163,46 +161,45 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.changeDetected = exports.checkForChanges = void 0;
 const core_1 = __nccwpck_require__(9093);
 const github = __importStar(__nccwpck_require__(5942));
-const checkForChanges = (check) => __awaiter(void 0, void 0, void 0, function* () {
+function checkForChanges(check) {
     var _a, e_1, _b, _c;
-    const token = (0, core_1.getInput)('token', { required: true });
-    const client = github.getOctokit(token);
-    const { context } = github;
-    if (!context.payload.pull_request) {
-        (0, core_1.info)(`This isn't a PR`);
-        check(null);
-        return;
-    }
-    const { number } = context.payload.pull_request;
-    try {
-        for (var _d = true, _e = __asyncValues(client.paginate.iterator(client.rest.pulls.listFiles, Object.assign(Object.assign({}, context.repo), { 
-            // eslint-disable-next-line camelcase
-            pull_number: number }))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
-            _c = _f.value;
-            _d = false;
-            const response = _c;
-            check(response.data.map((value) => value.filename));
+    return __awaiter(this, void 0, void 0, function* () {
+        const token = (0, core_1.getInput)('token', { required: true });
+        const client = github.getOctokit(token);
+        const { context } = github;
+        if (!context.payload.pull_request) {
+            (0, core_1.info)(`This isn't a PR`);
+            check(null);
+            return;
         }
-    }
-    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-    finally {
+        const { number } = context.payload.pull_request;
         try {
-            if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+            for (var _d = true, _e = __asyncValues(client.paginate.iterator(client.rest.pulls.listFiles, Object.assign(Object.assign({}, context.repo), { pull_number: number }))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
+                _c = _f.value;
+                _d = false;
+                const response = _c;
+                check(response.data.map(value => value.filename));
+            }
         }
-        finally { if (e_1) throw e_1.error; }
-    }
-});
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+    });
+}
 exports.checkForChanges = checkForChanges;
-const changeDetected = (monitored, changed) => {
+function changeDetected(monitored, changed) {
     for (const path of monitored) {
         for (const detected of changed) {
-            if (detected.startsWith(path) || detected === path) {
+            if (detected.startsWith(path) || detected === path)
                 return true;
-            }
         }
     }
     return false;
-};
+}
 exports.changeDetected = changeDetected;
 
 
@@ -249,24 +246,26 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.useCheckForTag = exports.getCommitMessage = void 0;
 const core_1 = __nccwpck_require__(9093);
 const github = __importStar(__nccwpck_require__(5942));
-const getCommitMessage = () => __awaiter(void 0, void 0, void 0, function* () {
-    const token = (0, core_1.getInput)('token', { required: true });
-    const client = github.getOctokit(token);
-    const { context } = github;
-    if (!context.payload.pull_request) {
-        (0, core_1.info)(`Didn't detect a PR`);
-        return null;
-    }
-    const { sha } = context.payload.pull_request.head;
-    const response = yield client.rest.git.getCommit(Object.assign(Object.assign({}, context.repo), { 
-        // eslint-disable-next-line camelcase
-        commit_sha: sha }));
-    const { message } = response.data;
-    return message;
-});
+function getCommitMessage() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const token = (0, core_1.getInput)('token', { required: true });
+        const client = github.getOctokit(token);
+        const { context } = github;
+        if (!context.payload.pull_request) {
+            (0, core_1.info)(`Didn't detect a PR`);
+            return null;
+        }
+        const { sha } = context.payload.pull_request.head;
+        const response = yield client.rest.git.getCommit(Object.assign(Object.assign({}, context.repo), { commit_sha: sha }));
+        const { message } = response.data;
+        return message;
+    });
+}
 exports.getCommitMessage = getCommitMessage;
 const getRegexFromTag = (tag) => new RegExp(`\\[${tag}\\]`, 'gm');
-const useCheckForTag = (message) => (tag) => !!message && getRegexFromTag(tag).test(message);
+function useCheckForTag(message) {
+    return (tag) => !!message && getRegexFromTag(tag).test(message);
+}
 exports.useCheckForTag = useCheckForTag;
 
 
@@ -308,8 +307,8 @@ class ActionInputs {
         this.getInputAsArray = (name, options) => core
             .getInput(name, options)
             .split('\n')
-            .map((s) => s.trim())
-            .filter((x) => x !== '');
+            .map(s => s.trim())
+            .filter(x => x !== '');
         const BACKEND_PATHS = 'backend_paths';
         const FRONTEND_PATHS = 'frontend_paths';
         const DOCUMENTATION_PATHS = 'documentation_paths';
@@ -356,16 +355,14 @@ function run() {
             yield (0, output_1.setActionOutput)(needsToRun);
         }
         catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof Error)
                 (0, core_1.setFailed)(error.message);
-            }
-            else {
+            else
                 (0, core_1.setFailed)('unknown error');
-            }
         }
     });
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
+// eslint-disable-next-line @typescript-eslint/no-floating-promises, unicorn/prefer-top-level-await
 run();
 
 
@@ -394,46 +391,47 @@ const Output = {
     BACKEND: 'backend_tasks',
     DOCUMENTATION: 'documentation_tasks',
 };
-const getStatus = (run) => {
-    if (run) {
+function getStatus(run) {
+    if (run)
         return 'Run';
-    }
     return 'Skipped';
-};
-const setActionOutput = (needsToRun) => __awaiter(void 0, void 0, void 0, function* () {
-    if (needsToRun.frontend) {
-        (0, core_1.info)(`will run frontend job`);
-        (0, core_1.setOutput)(Output.FRONTEND, true);
-    }
-    if (needsToRun.backend) {
-        (0, core_1.info)(`will run backend job`);
-        (0, core_1.setOutput)(Output.BACKEND, true);
-    }
-    if (needsToRun.e2e) {
-        (0, core_1.info)('will run e2e job');
-        (0, core_1.setOutput)(Output.E2E, true);
-    }
-    if (needsToRun.docs) {
-        (0, core_1.info)(`will run docs job`);
-        (0, core_1.setOutput)(Output.DOCUMENTATION, true);
-    }
-    yield core_1.summary
-        .addTable([
-        [
-            { data: 'Frontend', header: true },
-            { data: 'Backend', header: true },
-            { data: 'E2E', header: true },
-            { data: 'Documentation', header: true },
-        ],
-        [
-            getStatus(needsToRun.frontend),
-            getStatus(needsToRun.backend),
-            getStatus(needsToRun.e2e),
-            getStatus(needsToRun.docs),
-        ],
-    ])
-        .write();
-});
+}
+function setActionOutput(needsToRun) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (needsToRun.frontend) {
+            (0, core_1.info)(`will run frontend job`);
+            (0, core_1.setOutput)(Output.FRONTEND, true);
+        }
+        if (needsToRun.backend) {
+            (0, core_1.info)(`will run backend job`);
+            (0, core_1.setOutput)(Output.BACKEND, true);
+        }
+        if (needsToRun.e2e) {
+            (0, core_1.info)('will run e2e job');
+            (0, core_1.setOutput)(Output.E2E, true);
+        }
+        if (needsToRun.docs) {
+            (0, core_1.info)(`will run docs job`);
+            (0, core_1.setOutput)(Output.DOCUMENTATION, true);
+        }
+        yield core_1.summary
+            .addTable([
+            [
+                { data: 'Frontend', header: true },
+                { data: 'Backend', header: true },
+                { data: 'E2E', header: true },
+                { data: 'Documentation', header: true },
+            ],
+            [
+                getStatus(needsToRun.frontend),
+                getStatus(needsToRun.backend),
+                getStatus(needsToRun.e2e),
+                getStatus(needsToRun.docs),
+            ],
+        ])
+            .write();
+    });
+}
 exports.setActionOutput = setActionOutput;
 
 

@@ -1,5 +1,5 @@
 import { info, setOutput, summary } from '@actions/core';
-import { type RunList } from './types';
+import type { RunList } from './types';
 
 const Output = {
   FRONTEND: 'frontend_tasks',
@@ -8,14 +8,14 @@ const Output = {
   DOCUMENTATION: 'documentation_tasks',
 } as const;
 
-const getStatus = (run: boolean): string => {
-  if (run) {
+function getStatus(run: boolean): string {
+  if (run)
     return 'Run';
-  }
-  return 'Skipped';
-};
 
-export const setActionOutput = async (needsToRun: RunList): Promise<void> => {
+  return 'Skipped';
+}
+
+export async function setActionOutput(needsToRun: RunList): Promise<void> {
   if (needsToRun.frontend) {
     info(`will run frontend job`);
     setOutput(Output.FRONTEND, true);
@@ -52,4 +52,4 @@ export const setActionOutput = async (needsToRun: RunList): Promise<void> => {
       ],
     ])
     .write();
-};
+}

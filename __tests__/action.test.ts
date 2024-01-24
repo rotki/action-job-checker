@@ -1,23 +1,26 @@
+import { expect, it } from 'vitest';
 import { Tag, type Tags } from '../src/tags';
-import { type IActionInputs } from '../src/input';
 import { checkRequiredTasks } from '../src/action';
-import { type RunList } from '../src/types';
+import type { IActionInputs } from '../src/input';
+import type { RunList } from '../src/types';
 
-const generateCommit = (tag: Tags | '' = ''): string => {
+function generateCommit(tag: Tags | '' = ''): string {
   const commitTag = tag ? `[${tag}]` : '';
   return `Test commit message
     
    ${commitTag}
     `;
-};
+}
 
-const generateInputs = (): IActionInputs => ({
-  frontendPaths: [],
-  backendPaths: [],
-  documentationPaths: [],
-});
+function generateInputs(): IActionInputs {
+  return {
+    frontendPaths: [],
+    backendPaths: [],
+    documentationPaths: [],
+  };
+}
 
-test('[run e2e] will only run e2e', async () => {
+it('[run e2e] will only run e2e', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.RUN_E2E), generateInputs()),
   ).toMatchObject({
@@ -28,7 +31,7 @@ test('[run e2e] will only run e2e', async () => {
   } satisfies RunList);
 });
 
-test('[run all] will only run all tasks', async () => {
+it('[run all] will only run all tasks', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.RUN_ALL), generateInputs()),
   ).toMatchObject({
@@ -39,7 +42,7 @@ test('[run all] will only run all tasks', async () => {
   } satisfies RunList);
 });
 
-test('[run frontend] will only run frontend tasks', async () => {
+it('[run frontend] will only run frontend tasks', async () => {
   expect(
     await checkRequiredTasks(
       generateCommit(Tag.RUN_FRONTEND),
@@ -53,7 +56,7 @@ test('[run frontend] will only run frontend tasks', async () => {
   } satisfies RunList);
 });
 
-test('[skip ci] will only run nothing', async () => {
+it('[skip ci] will only run nothing', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.SKIP_CI), generateInputs()),
   ).toMatchObject({
@@ -64,7 +67,7 @@ test('[skip ci] will only run nothing', async () => {
   } satisfies RunList);
 });
 
-test('[ci skip] will only run nothing', async () => {
+it('[ci skip] will only run nothing', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.CI_SKIP), generateInputs()),
   ).toMatchObject({

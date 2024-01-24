@@ -1,9 +1,9 @@
 import { getInput, info } from '@actions/core';
 import * as github from '@actions/github';
-import { type CommitMessage } from './types';
-import { type Tags } from './tags';
+import type { CommitMessage } from './types';
+import type { Tags } from './tags';
 
-export const getCommitMessage = async (): Promise<CommitMessage> => {
+export async function getCommitMessage(): Promise<CommitMessage> {
   const token = getInput('token', { required: true });
   const client = github.getOctokit(token);
   const { context } = github;
@@ -15,17 +15,17 @@ export const getCommitMessage = async (): Promise<CommitMessage> => {
 
   const response = await client.rest.git.getCommit({
     ...context.repo,
-    // eslint-disable-next-line camelcase
+
     commit_sha: sha,
   });
 
   const { message } = response.data;
   return message;
-};
+}
 
 const getRegexFromTag = (tag: Tags): RegExp => new RegExp(`\\[${tag}\\]`, 'gm');
 
-export const useCheckForTag =
-  (message: CommitMessage) =>
-  (tag: Tags): boolean =>
+export function useCheckForTag(message: CommitMessage) {
+  return (tag: Tags): boolean =>
     !!message && getRegexFromTag(tag).test(message);
+}
