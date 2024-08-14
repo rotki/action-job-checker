@@ -1,6 +1,6 @@
 {
   "name": "job-checker",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "private": true,
   "packageManager": "pnpm@9.7.0",
   "description": "Checks which jobs are ",
