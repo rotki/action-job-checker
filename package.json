@@ -2,7 +2,7 @@
   "name": "job-checker",
   "version": "3.0.1",
   "private": true,
-  "packageManager": "pnpm@8.14.3",
+  "packageManager": "pnpm@9.7.0",
   "description": "Checks which jobs are ",
   "keywords": [
     "actions",
@@ -27,24 +27,24 @@
     "@actions/github": "6.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "18.5.0",
-    "@commitlint/config-conventional": "18.5.0",
-    "@rotki/eslint-config": "2.4.4",
-    "@types/node": "20.11.6",
+    "@commitlint/cli": "19.4.0",
+    "@commitlint/config-conventional": "19.2.2",
+    "@rotki/eslint-config": "2.9.1",
+    "@types/node": "20.14.15",
     "@vercel/ncc": "0.38.1",
-    "bumpp": "9.3.0",
-    "eslint": "8.56.0",
-    "eslint-plugin-github": "4.10.1",
-    "husky": "8.0.3",
+    "bumpp": "9.5.1",
+    "eslint": "8.57.0",
+    "eslint-plugin-github": "5.0.1",
+    "husky": "9.1.4",
     "js-yaml": "4.1.0",
-    "lint-staged": "15.2.0",
-    "prettier": "3.2.4",
-    "typescript": "5.3.3",
-    "vitest": "1.2.1"
+    "lint-staged": "15.2.9",
+    "prettier": "3.3.3",
+    "typescript": "5.5.4",
+    "vitest": "2.0.5"
   },
   "engines": {
     "node": ">=20 <21",
-    "pnpm": ">=8 <9"
+    "pnpm": ">=9 <10"
   },
   "lint-staged": {
     "*.{js,ts,vue,md,json,yml}": "eslint"

@@ -16,7 +16,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkRequiredTasks = void 0;
+exports.checkRequiredTasks = checkRequiredTasks;
 const core_1 = __nccwpck_require__(9093);
 const commit_1 = __nccwpck_require__(4147);
 const tags_1 = __nccwpck_require__(3442);
@@ -73,7 +73,6 @@ function checkRequiredTasks(commitMessage, inputs) {
         return needsToRun;
     });
 }
-exports.checkRequiredTasks = checkRequiredTasks;
 
 
 /***/ }),
@@ -84,7 +83,7 @@ exports.checkRequiredTasks = checkRequiredTasks;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.usePyTestTagCheck = void 0;
+exports.usePyTestTagCheck = usePyTestTagCheck;
 const core_1 = __nccwpck_require__(9093);
 const commit_1 = __nccwpck_require__(4147);
 const tags_1 = __nccwpck_require__(3442);
@@ -108,7 +107,6 @@ function usePyTestTagCheck(commitMessage, needsToRun) {
         }
     };
 }
-exports.usePyTestTagCheck = usePyTestTagCheck;
 
 
 /***/ }),
@@ -158,12 +156,13 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.changeDetected = exports.checkForChanges = void 0;
+exports.checkForChanges = checkForChanges;
+exports.changeDetected = changeDetected;
 const core_1 = __nccwpck_require__(9093);
 const github = __importStar(__nccwpck_require__(5942));
 function checkForChanges(check) {
-    var _a, e_1, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, e_1, _b, _c;
         const token = (0, core_1.getInput)('token', { required: true });
         const client = github.getOctokit(token);
         const { context } = github;
@@ -190,7 +189,6 @@ function checkForChanges(check) {
         }
     });
 }
-exports.checkForChanges = checkForChanges;
 function changeDetected(monitored, changed) {
     for (const path of monitored) {
         for (const detected of changed) {
@@ -200,7 +198,6 @@ function changeDetected(monitored, changed) {
     }
     return false;
 }
-exports.changeDetected = changeDetected;
 
 
 /***/ }),
@@ -243,7 +240,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.useCheckForTag = exports.getCommitMessage = void 0;
+exports.getCommitMessage = getCommitMessage;
+exports.useCheckForTag = useCheckForTag;
 const core_1 = __nccwpck_require__(9093);
 const github = __importStar(__nccwpck_require__(5942));
 function getCommitMessage() {
@@ -261,12 +259,10 @@ function getCommitMessage() {
         return message;
     });
 }
-exports.getCommitMessage = getCommitMessage;
 const getRegexFromTag = (tag) => new RegExp(`\\[${tag}\\]`, 'gm');
 function useCheckForTag(message) {
     return (tag) => !!message && getRegexFromTag(tag).test(message);
 }
-exports.useCheckForTag = useCheckForTag;
 
 
 /***/ }),
@@ -383,7 +379,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setActionOutput = void 0;
+exports.setActionOutput = setActionOutput;
 const core_1 = __nccwpck_require__(9093);
 const Output = {
     FRONTEND: 'frontend_tasks',
@@ -432,7 +428,6 @@ function setActionOutput(needsToRun) {
             .write();
     });
 }
-exports.setActionOutput = setActionOutput;
 
 
 /***/ }),
