@@ -14,9 +14,9 @@ function generateCommit(tag: Tags | '' = ''): string {
 
 function generateInputs(): IActionInputs {
   return {
-    frontendPaths: [],
     backendPaths: [],
     documentationPaths: [],
+    frontendPaths: [],
   };
 }
 
@@ -24,10 +24,10 @@ it('[run e2e] will only run e2e', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.RUN_E2E), generateInputs()),
   ).toMatchObject({
-    frontend: false,
-    e2e: true,
     backend: false,
     docs: false,
+    e2e: true,
+    frontend: false,
   } satisfies RunList);
 });
 
@@ -35,10 +35,10 @@ it('[run all] will only run all tasks', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.RUN_ALL), generateInputs()),
   ).toMatchObject({
-    frontend: true,
-    e2e: true,
     backend: true,
     docs: true,
+    e2e: true,
+    frontend: true,
   } satisfies RunList);
 });
 
@@ -49,10 +49,10 @@ it('[run frontend] will only run frontend tasks', async () => {
       generateInputs(),
     ),
   ).toMatchObject({
-    frontend: true,
-    e2e: true,
     backend: false,
     docs: false,
+    e2e: true,
+    frontend: true,
   } satisfies RunList);
 });
 
@@ -60,10 +60,10 @@ it('[skip ci] will only run nothing', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.SKIP_CI), generateInputs()),
   ).toMatchObject({
-    frontend: false,
-    e2e: false,
     backend: false,
     docs: false,
+    e2e: false,
+    frontend: false,
   } satisfies RunList);
 });
 
@@ -71,9 +71,9 @@ it('[ci skip] will only run nothing', async () => {
   expect(
     await checkRequiredTasks(generateCommit(Tag.CI_SKIP), generateInputs()),
   ).toMatchObject({
-    frontend: false,
-    e2e: false,
     backend: false,
     docs: false,
+    e2e: false,
+    frontend: false,
   } satisfies RunList);
 });

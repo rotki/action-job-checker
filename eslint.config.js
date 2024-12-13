@@ -3,7 +3,7 @@ const github = require('eslint-plugin-github');
 
 module.exports = rotki({
   typescript: {
-    tsconfigPath: 'tsconfig.eslint.json',
+    tsconfigPath: 'tsconfig.json',
   },
   stylistic: true,
   formatters: true,
@@ -17,5 +17,10 @@ module.exports = rotki({
     'github/no-implicit-buggy-globals': 'error',
     'github/no-then': 'error',
     'github/no-dynamic-script-tag': 'error',
+  },
+}, {
+  files: ['**/*.ts'],
+  rules: {
+    'perfectionist/sort-objects': 'error',
   },
 });

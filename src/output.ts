@@ -2,10 +2,10 @@ import { info, setOutput, summary } from '@actions/core';
 import type { RunList } from './types';
 
 const Output = {
-  FRONTEND: 'frontend_tasks',
-  E2E: 'e2e_tasks',
   BACKEND: 'backend_tasks',
   DOCUMENTATION: 'documentation_tasks',
+  E2E: 'e2e_tasks',
+  FRONTEND: 'frontend_tasks',
 } as const;
 
 function getStatus(run: boolean): string {

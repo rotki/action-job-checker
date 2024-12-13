@@ -10,10 +10,10 @@ export async function checkRequiredTasks(
   inputs: IActionInputs,
 ): Promise<RunList> {
   const needsToRun: RunList = {
-    frontend: false,
-    e2e: false,
     backend: false,
     docs: false,
+    e2e: false,
+    frontend: false,
   };
 
   const checkForTag = useCheckForTag(commitMessage);
