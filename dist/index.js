@@ -335,6 +335,7 @@ exports.ActionInputs = void 0;
 const core = __importStar(__nccwpck_require__(9999));
 class ActionInputs {
     constructor() {
+        var _a;
         this.getInputAsArray = (name, options) => core
             .getInput(name, options)
             .split('\n')
@@ -345,7 +346,7 @@ class ActionInputs {
         const FRONTEND_PATHS = 'frontend_paths';
         const DOCUMENTATION_PATHS = 'documentation_paths';
         const options = { required: true };
-        this.colibriPaths = this.getInputAsArray(COLIBRI_PATHS, options);
+        this.colibriPaths = (_a = this.getInputAsArray(COLIBRI_PATHS, { required: false })) !== null && _a !== void 0 ? _a : [];
         this.backendPaths = this.getInputAsArray(BACKEND_PATHS, options);
         this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
         this.documentationPaths = this.getInputAsArray(DOCUMENTATION_PATHS, options);

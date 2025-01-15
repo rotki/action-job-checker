@@ -7,7 +7,7 @@ inputs:
     required: true
   colibri_paths:
     description: Paths of files or directories that will trigger the colibri tasks
-    required: true
+    required: false
   backend_paths:
     description: Paths of files or directories that will trigger the backend tasks
     required: true

@@ -21,7 +21,7 @@ export class ActionInputs implements IActionInputs {
 
     const options = { required: true };
 
-    this.colibriPaths = this.getInputAsArray(COLIBRI_PATHS, options);
+    this.colibriPaths = this.getInputAsArray(COLIBRI_PATHS, { required: false }) ?? [];
     this.backendPaths = this.getInputAsArray(BACKEND_PATHS, options);
     this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
     this.documentationPaths = this.getInputAsArray(
