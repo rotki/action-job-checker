@@ -17,7 +17,8 @@
     "lint:fix": "eslint . --fix",
     "package": "ncc build --source-map --license licenses.txt",
     "preinstall": "npx only-allow pnpm",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "all": "pnpm run build && pnpm run lint && pnpm run package && pnpm run test",
     "prepare": "husky install",
     "release": "bumpp --no-push"
