@@ -11,6 +11,7 @@ export async function checkRequiredTasks(
 ): Promise<RunList> {
   const needsToRun: RunList = {
     backend: false,
+    colibri: false,
     docs: false,
     e2e: false,
     frontend: false,
@@ -51,6 +52,9 @@ export async function checkRequiredTasks(
           needsToRun.frontend = true;
           needsToRun.e2e = true;
         }
+        if (changeDetected(inputs.colibriPaths, files))
+          needsToRun.colibri = true;
+
         if (changeDetected(inputs.backendPaths, files))
           needsToRun.backend = true;
 

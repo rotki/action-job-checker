@@ -16,6 +16,7 @@ check-changes:
   name: Required job check
   runs-on: ubuntu-latest
   outputs:
+    colibri_tasks: ${{ steps.checker.outputs.colibri_tasks }}
     backend_tasks: ${{ steps.checker.outputs.backend_tasks }}
     frontend_tasks: ${{ steps.checker.outputs.frontend_tasks }}
     documentation_tasks: ${{ steps.checker.outputs.documentation_tasks }}
@@ -56,6 +57,7 @@ The action has the following outputs:
 
 - **frontend_tasks**: boolean
 - **e2e_tasks**: boolean
+- **colibri_tasks**: boolean
 - **backend_tasks**: boolean
 - **documentation_tasks**: boolean
 - **test_environment**: string (**''** | **nfts** | **nightly**)

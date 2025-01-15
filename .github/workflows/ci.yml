@@ -103,6 +103,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           documentation_paths: |
             ./
+          colibri_paths: |
+            ./
           backend_paths: |
             ./
           frontend_paths: |
@@ -112,11 +114,13 @@ jobs:
           echo "test_environment: ${TEST_ENVIRONMENT}"
           echo "frontend_tasks: ${FRONTEND_TASKS}"
           echo "documentation_tasks: ${DOCUMENTATION_TASKS}"
+          echo "colibri_tasks: ${COLIBRI_TASKS}"
           echo "backend_tasks: ${BACKEND_TASKS}"
           echo "e2e_tasks: ${E2E_TASKS}"
         env:
           TEST_ENVIRONMENT: ${{ steps.test.outputs.test_environment }}
           FRONTEND_TASKS: ${{ steps.test.outputs.frontend_tasks }}
           DOCUMENTATION_TASKS: ${{ steps.test.outputs.documentation_tasks }}
+          COLIBRI_TASKS: ${{ steps.test.outputs.colibri_tasks }}
           BACKEND_TASKS: ${{ steps.test.outputs.backend_tasks }}
           E2E_TASKS: ${{ steps.test.outputs.e2e_tasks }}
