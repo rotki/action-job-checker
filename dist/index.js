@@ -445,9 +445,9 @@ function setActionOutput(needsToRun) {
             if (needsToRun[job.key]) {
                 (0, core_1.info)(`will run ${job.description}`);
                 (0, core_1.setOutput)(job.output, true);
-                summaryHeaders.push(job.description);
-                summaryDescription.push(getStatus(needsToRun[job.key]));
             }
+            summaryHeaders.push(job.description);
+            summaryDescription.push(getStatus(needsToRun[job.key]));
         }
         yield core_1.summary
             .addTable([

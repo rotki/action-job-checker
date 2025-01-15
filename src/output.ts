@@ -38,9 +38,9 @@ export async function setActionOutput(needsToRun: RunList): Promise<void> {
     if (needsToRun[job.key]) {
       info(`will run ${job.description}`);
       setOutput(job.output, true);
-      summaryHeaders.push(job.description);
-      summaryDescription.push(getStatus(needsToRun[job.key]));
     }
+    summaryHeaders.push(job.description);
+    summaryDescription.push(getStatus(needsToRun[job.key]));
   }
 
   await summary
