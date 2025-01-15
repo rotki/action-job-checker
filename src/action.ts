@@ -24,6 +24,7 @@ export async function checkRequiredTasks(
     needsToRun.backend = true;
     needsToRun.e2e = true;
     needsToRun.docs = true;
+    needsToRun.colibri = true;
     info(`[${Tag.RUN_ALL}] detected, running all tasks`);
   }
   else if (checkForTag(Tag.SKIP_CI) || checkForTag(Tag.CI_SKIP)) {
@@ -45,6 +46,7 @@ export async function checkRequiredTasks(
         needsToRun.e2e = true;
         needsToRun.backend = true;
         needsToRun.docs = true;
+        needsToRun.colibri = true;
       }
       else {
         info(`Checking ${files.length} files of the PR for changes`);

@@ -26,6 +26,7 @@ it('[run e2e] will only run e2e', async () => {
     await checkRequiredTasks(generateCommit(Tag.RUN_E2E), generateInputs()),
   ).toMatchObject({
     backend: false,
+    colibri: false,
     docs: false,
     e2e: true,
     frontend: false,
@@ -37,6 +38,7 @@ it('[run all] will only run all tasks', async () => {
     await checkRequiredTasks(generateCommit(Tag.RUN_ALL), generateInputs()),
   ).toMatchObject({
     backend: true,
+    colibri: true,
     docs: true,
     e2e: true,
     frontend: true,
@@ -51,6 +53,7 @@ it('[run frontend] will only run frontend tasks', async () => {
     ),
   ).toMatchObject({
     backend: false,
+    colibri: false,
     docs: false,
     e2e: true,
     frontend: true,
@@ -62,6 +65,7 @@ it('[skip ci] will only run nothing', async () => {
     await checkRequiredTasks(generateCommit(Tag.SKIP_CI), generateInputs()),
   ).toMatchObject({
     backend: false,
+    colibri: false,
     docs: false,
     e2e: false,
     frontend: false,
@@ -73,6 +77,7 @@ it('[ci skip] will only run nothing', async () => {
     await checkRequiredTasks(generateCommit(Tag.CI_SKIP), generateInputs()),
   ).toMatchObject({
     backend: false,
+    colibri: false,
     docs: false,
     e2e: false,
     frontend: false,

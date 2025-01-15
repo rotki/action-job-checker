@@ -1,6 +1,12 @@
 import { info, setOutput, summary } from '@actions/core';
 import type { RunList } from './types';
 
+interface Job {
+  description: string;
+  key: keyof RunList;
+  output: typeof Output[keyof typeof Output];
+}
+
 const Output = {
   BACKEND: 'backend_tasks',
   COLIBRI: 'colibri_tasks',
@@ -8,6 +14,14 @@ const Output = {
   E2E: 'e2e_tasks',
   FRONTEND: 'frontend_tasks',
 } as const;
+
+const jobs: Job[] = [
+  { description: 'frontend job', key: 'frontend', output: Output.FRONTEND },
+  { description: 'backend job', key: 'backend', output: Output.BACKEND },
+  { description: 'e2e job', key: 'e2e', output: Output.E2E },
+  { description: 'docs job', key: 'docs', output: Output.DOCUMENTATION },
+  { description: 'colibri job', key: 'colibri', output: Output.COLIBRI },
+] as const;
 
 function getStatus(run: boolean): string {
   if (run)
@@ -17,40 +31,22 @@ function getStatus(run: boolean): string {
 }
 
 export async function setActionOutput(needsToRun: RunList): Promise<void> {
-  if (needsToRun.frontend) {
-    info(`will run frontend job`);
-    setOutput(Output.FRONTEND, true);
-  }
+  const summaryHeaders: string[] = [];
+  const summaryDescription: string[] = [];
 
-  if (needsToRun.backend) {
-    info(`will run backend job`);
-    setOutput(Output.BACKEND, true);
-  }
-
-  if (needsToRun.e2e) {
-    info('will run e2e job');
-    setOutput(Output.E2E, true);
-  }
-
-  if (needsToRun.docs) {
-    info(`will run docs job`);
-    setOutput(Output.DOCUMENTATION, true);
+  for (const job of jobs) {
+    if (needsToRun[job.key]) {
+      info(`will run ${job.description}`);
+      setOutput(job.output, true);
+      summaryHeaders.push(job.description);
+      summaryDescription.push(getStatus(needsToRun[job.key]));
+    }
   }
 
   await summary
     .addTable([
-      [
-        { data: 'Frontend', header: true },
-        { data: 'Backend', header: true },
-        { data: 'E2E', header: true },
-        { data: 'Documentation', header: true },
-      ],
-      [
-        getStatus(needsToRun.frontend),
-        getStatus(needsToRun.backend),
-        getStatus(needsToRun.e2e),
-        getStatus(needsToRun.docs),
-      ],
+      summaryHeaders.map(header => ({ data: header, header: true })),
+      summaryDescription,
     ])
     .write();
 }

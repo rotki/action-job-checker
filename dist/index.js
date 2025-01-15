@@ -36,6 +36,7 @@ function checkRequiredTasks(commitMessage, inputs) {
             needsToRun.backend = true;
             needsToRun.e2e = true;
             needsToRun.docs = true;
+            needsToRun.colibri = true;
             (0, core_1.info)(`[${tags_1.Tag.RUN_ALL}] detected, running all tasks`);
         }
         else if (checkForTag(tags_1.Tag.SKIP_CI) || checkForTag(tags_1.Tag.CI_SKIP)) {
@@ -57,6 +58,7 @@ function checkRequiredTasks(commitMessage, inputs) {
                     needsToRun.e2e = true;
                     needsToRun.backend = true;
                     needsToRun.docs = true;
+                    needsToRun.colibri = true;
                 }
                 else {
                     (0, core_1.info)(`Checking ${files.length} files of the PR for changes`);
@@ -423,6 +425,13 @@ const Output = {
     E2E: 'e2e_tasks',
     FRONTEND: 'frontend_tasks',
 };
+const jobs = [
+    { description: 'frontend job', key: 'frontend', output: Output.FRONTEND },
+    { description: 'backend job', key: 'backend', output: Output.BACKEND },
+    { description: 'e2e job', key: 'e2e', output: Output.E2E },
+    { description: 'docs job', key: 'docs', output: Output.DOCUMENTATION },
+    { description: 'colibri job', key: 'colibri', output: Output.COLIBRI },
+];
 function getStatus(run) {
     if (run)
         return 'Run';
@@ -430,36 +439,20 @@ function getStatus(run) {
 }
 function setActionOutput(needsToRun) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (needsToRun.frontend) {
-            (0, core_1.info)(`will run frontend job`);
-            (0, core_1.setOutput)(Output.FRONTEND, true);
-        }
-        if (needsToRun.backend) {
-            (0, core_1.info)(`will run backend job`);
-            (0, core_1.setOutput)(Output.BACKEND, true);
-        }
-        if (needsToRun.e2e) {
-            (0, core_1.info)('will run e2e job');
-            (0, core_1.setOutput)(Output.E2E, true);
-        }
-        if (needsToRun.docs) {
-            (0, core_1.info)(`will run docs job`);
-            (0, core_1.setOutput)(Output.DOCUMENTATION, true);
+        const summaryHeaders = [];
+        const summaryDescription = [];
+        for (const job of jobs) {
+            if (needsToRun[job.key]) {
+                (0, core_1.info)(`will run ${job.description}`);
+                (0, core_1.setOutput)(job.output, true);
+                summaryHeaders.push(job.description);
+                summaryDescription.push(getStatus(needsToRun[job.key]));
+            }
         }
         yield core_1.summary
             .addTable([
-            [
-                { data: 'Frontend', header: true },
-                { data: 'Backend', header: true },
-                { data: 'E2E', header: true },
-                { data: 'Documentation', header: true },
-            ],
-            [
-                getStatus(needsToRun.frontend),
-                getStatus(needsToRun.backend),
-                getStatus(needsToRun.e2e),
-                getStatus(needsToRun.docs),
-            ],
+            summaryHeaders.map(header => ({ data: header, header: true })),
+            summaryDescription,
         ])
             .write();
     });
