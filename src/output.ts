@@ -3,6 +3,7 @@ import type { RunList } from './types';
 
 const Output = {
   BACKEND: 'backend_tasks',
+  COLIBRI: 'colibri_tasks',
   DOCUMENTATION: 'documentation_tasks',
   E2E: 'e2e_tasks',
   FRONTEND: 'frontend_tasks',

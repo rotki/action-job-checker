@@ -15,6 +15,7 @@ function generateCommit(tag: Tags | '' = ''): string {
 function generateInputs(): IActionInputs {
   return {
     backendPaths: [],
+    colibriPaths: [],
     documentationPaths: [],
     frontendPaths: [],
   };

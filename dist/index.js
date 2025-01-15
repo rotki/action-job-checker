@@ -25,6 +25,7 @@ function checkRequiredTasks(commitMessage, inputs) {
     return __awaiter(this, void 0, void 0, function* () {
         const needsToRun = {
             backend: false,
+            colibri: false,
             docs: false,
             e2e: false,
             frontend: false,
@@ -63,6 +64,8 @@ function checkRequiredTasks(commitMessage, inputs) {
                         needsToRun.frontend = true;
                         needsToRun.e2e = true;
                     }
+                    if ((0, changes_1.changeDetected)(inputs.colibriPaths, files))
+                        needsToRun.colibri = true;
                     if ((0, changes_1.changeDetected)(inputs.backendPaths, files))
                         needsToRun.backend = true;
                     if ((0, changes_1.changeDetected)(inputs.documentationPaths, files))
@@ -335,10 +338,12 @@ class ActionInputs {
             .split('\n')
             .map(s => s.trim())
             .filter(x => x !== '');
+        const COLIBRI_PATHS = 'colibri_paths';
         const BACKEND_PATHS = 'backend_paths';
         const FRONTEND_PATHS = 'frontend_paths';
         const DOCUMENTATION_PATHS = 'documentation_paths';
         const options = { required: true };
+        this.colibriPaths = this.getInputAsArray(COLIBRI_PATHS, options);
         this.backendPaths = this.getInputAsArray(BACKEND_PATHS, options);
         this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
         this.documentationPaths = this.getInputAsArray(DOCUMENTATION_PATHS, options);
@@ -413,6 +418,7 @@ exports.setActionOutput = setActionOutput;
 const core_1 = __nccwpck_require__(9999);
 const Output = {
     BACKEND: 'backend_tasks',
+    COLIBRI: 'colibri_tasks',
     DOCUMENTATION: 'documentation_tasks',
     E2E: 'e2e_tasks',
     FRONTEND: 'frontend_tasks',
