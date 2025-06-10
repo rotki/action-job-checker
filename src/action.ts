@@ -2,6 +2,7 @@ import { info } from '@actions/core';
 import { useCheckForTag } from './commit';
 import { Tag } from './tags';
 import { changeDetected, checkForChanges } from './changes';
+import { hasLabel, isLabelEvent, isSkipLabelChanged } from './labels';
 import type { RunList } from './types';
 import type { IActionInputs } from './input';
 
@@ -16,6 +17,16 @@ export async function checkRequiredTasks(
     e2e: false,
     frontend: false,
   };
+
+  if (isLabelEvent() && !isSkipLabelChanged(inputs.skipLabel)) {
+    info('Label changed but not the skip label, skipping all tasks');
+    return needsToRun;
+  }
+
+  if (await hasLabel(inputs.skipLabel)) {
+    info(`PR has label "${inputs.skipLabel}", skipping all tasks`);
+    return needsToRun;
+  }
 
   const checkForTag = useCheckForTag(commitMessage);
 

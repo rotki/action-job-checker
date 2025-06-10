@@ -17,6 +17,10 @@ inputs:
   documentation_paths:
     description: Paths of files or directories that will trigger the documentation build
     required: true
+  skip_label:
+    description: PR label that will cause all tasks to be skipped
+    required: false
+    default: skip ci
 
 outputs:
   colibri_tasks:

@@ -5,6 +5,7 @@ export interface IActionInputs {
   readonly backendPaths: string[];
   readonly frontendPaths: string[];
   readonly documentationPaths: string[];
+  readonly skipLabel: string;
 }
 
 export class ActionInputs implements IActionInputs {
@@ -12,12 +13,14 @@ export class ActionInputs implements IActionInputs {
   readonly backendPaths: string[];
   readonly frontendPaths: string[];
   readonly documentationPaths: string[];
+  readonly skipLabel: string;
 
   constructor() {
     const COLIBRI_PATHS = 'colibri_paths';
     const BACKEND_PATHS = 'backend_paths';
     const FRONTEND_PATHS = 'frontend_paths';
     const DOCUMENTATION_PATHS = 'documentation_paths';
+    const SKIP_LABEL = 'skip_label';
 
     const options = { required: true };
 
@@ -28,6 +31,7 @@ export class ActionInputs implements IActionInputs {
       DOCUMENTATION_PATHS,
       options,
     );
+    this.skipLabel = core.getInput(SKIP_LABEL, { required: false }) || 'skip ci';
   }
 
   private getInputAsArray = (

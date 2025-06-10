@@ -21,6 +21,7 @@ const core_1 = __nccwpck_require__(9999);
 const commit_1 = __nccwpck_require__(2277);
 const tags_1 = __nccwpck_require__(25);
 const changes_1 = __nccwpck_require__(7371);
+const labels_1 = __nccwpck_require__(8519);
 function checkRequiredTasks(commitMessage, inputs) {
     return __awaiter(this, void 0, void 0, function* () {
         const needsToRun = {
@@ -30,6 +31,14 @@ function checkRequiredTasks(commitMessage, inputs) {
             e2e: false,
             frontend: false,
         };
+        if ((0, labels_1.isLabelEvent)() && !(0, labels_1.isSkipLabelChanged)(inputs.skipLabel)) {
+            (0, core_1.info)('Label changed but not the skip label, skipping all tasks');
+            return needsToRun;
+        }
+        if (yield (0, labels_1.hasLabel)(inputs.skipLabel)) {
+            (0, core_1.info)(`PR has label "${inputs.skipLabel}", skipping all tasks`);
+            return needsToRun;
+        }
         const checkForTag = (0, commit_1.useCheckForTag)(commitMessage);
         if (checkForTag(tags_1.Tag.RUN_ALL)) {
             needsToRun.frontend = true;
@@ -345,14 +354,108 @@ class ActionInputs {
         const BACKEND_PATHS = 'backend_paths';
         const FRONTEND_PATHS = 'frontend_paths';
         const DOCUMENTATION_PATHS = 'documentation_paths';
+        const SKIP_LABEL = 'skip_label';
         const options = { required: true };
         this.colibriPaths = (_a = this.getInputAsArray(COLIBRI_PATHS, { required: false })) !== null && _a !== void 0 ? _a : [];
         this.backendPaths = this.getInputAsArray(BACKEND_PATHS, options);
         this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
         this.documentationPaths = this.getInputAsArray(DOCUMENTATION_PATHS, options);
+        this.skipLabel = core.getInput(SKIP_LABEL, { required: false }) || 'skip ci';
     }
 }
 exports.ActionInputs = ActionInputs;
+
+
+/***/ }),
+
+/***/ 8519:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.hasLabel = hasLabel;
+exports.isLabelEvent = isLabelEvent;
+exports.isSkipLabelChanged = isSkipLabelChanged;
+const core_1 = __nccwpck_require__(9999);
+const github = __importStar(__nccwpck_require__(2819));
+function hasLabel(labelName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const token = (0, core_1.getInput)('token', { required: true });
+        const client = github.getOctokit(token);
+        const { context } = github;
+        if (!context.payload.pull_request) {
+            (0, core_1.info)(`This isn't a PR, skipping label check`);
+            return false;
+        }
+        const { number } = context.payload.pull_request;
+        try {
+            const { data: labels } = yield client.rest.issues.listLabelsOnIssue(Object.assign(Object.assign({}, context.repo), { issue_number: number }));
+            const hasMatchingLabel = labels.some(label => label.name.toLowerCase() === labelName.toLowerCase());
+            if (hasMatchingLabel) {
+                (0, core_1.info)(`PR has label "${labelName}", all tasks will be skipped`);
+            }
+            return hasMatchingLabel;
+        }
+        catch (error) {
+            (0, core_1.info)(`Error checking for label: ${String(error)}`);
+            return false;
+        }
+    });
+}
+function isLabelEvent() {
+    const { context } = github;
+    return context.payload.action === 'labeled' || context.payload.action === 'unlabeled';
+}
+function isSkipLabelChanged(skipLabel) {
+    const { context } = github;
+    if (!context.payload.label) {
+        return false;
+    }
+    return context.payload.label.name.toLowerCase() === skipLabel.toLowerCase();
+}
 
 
 /***/ }),

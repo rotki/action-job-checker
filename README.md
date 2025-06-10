@@ -37,6 +37,7 @@ check-changes:
           requirements_lint.txt
         frontend_paths: |
           frontend/app
+        skip_label: skip ci
 ```
 
 You use the output of the job in other jobs to enable disable running after push.
@@ -78,3 +79,11 @@ The action supports the following commit message flags:
 - `[skip py tests]` will not run the python backend tests regardless of the change status of the monitored directory.
 - `[run nft py tests]` will set the `test_environment` output to `nft`.
 - `[run all py tests]` will set the `test_environment` output flag to `nightly`
+
+## PR Label Support
+
+The action supports skipping all tasks if a PR has a specific label:
+
+- The `skip_label` parameter defines which PR label will cause all tasks to be skipped
+- Default value is `skip ci` if not specified
+- This provides an alternative way to skip CI tasks without requiring commit message changes
