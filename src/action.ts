@@ -1,10 +1,10 @@
-import { info } from '@actions/core';
-import { useCheckForTag } from './commit';
-import { Tag } from './tags';
-import { changeDetected, checkForChanges } from './changes';
-import { hasLabel, isLabelEvent, isSkipLabelChanged } from './labels';
-import type { RunList } from './types';
 import type { IActionInputs } from './input';
+import type { RunList } from './types';
+import { info } from '@actions/core';
+import { changeDetected, checkForChanges } from './changes';
+import { useCheckForTag } from './commit';
+import { hasLabel, isLabelEvent, isSkipLabelChanged } from './labels';
+import { Tag } from './tags';
 
 export async function checkRequiredTasks(
   commitMessage: string | null,

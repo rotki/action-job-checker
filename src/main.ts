@@ -1,9 +1,9 @@
 import { setFailed } from '@actions/core';
-import { ActionInputs } from './input';
-import { getCommitMessage } from './commit';
-import { setActionOutput } from './output';
-import { usePyTestTagCheck } from './backend-tags';
 import { checkRequiredTasks } from './action';
+import { usePyTestTagCheck } from './backend-tags';
+import { getCommitMessage } from './commit';
+import { ActionInputs } from './input';
+import { setActionOutput } from './output';
 
 async function run(): Promise<void> {
   try {

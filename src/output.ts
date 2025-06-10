@@ -1,5 +1,5 @@
-import { info, setOutput, summary } from '@actions/core';
 import type { RunList } from './types';
+import { info, setOutput, summary } from '@actions/core';
 
 interface Job {
   description: string;

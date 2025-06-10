@@ -1,9 +1,9 @@
-import { expect, it, vi } from 'vitest';
-import { Tag, type Tags } from '../src/tags';
-import { checkRequiredTasks } from '../src/action';
-import { hasLabel, isLabelEvent, isSkipLabelChanged } from '../src/labels';
 import type { IActionInputs } from '../src/input';
 import type { RunList } from '../src/types';
+import { expect, it, vi } from 'vitest';
+import { checkRequiredTasks } from '../src/action';
+import { hasLabel, isLabelEvent, isSkipLabelChanged } from '../src/labels';
+import { Tag, type Tags } from '../src/tags';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockImplementation((name) => {

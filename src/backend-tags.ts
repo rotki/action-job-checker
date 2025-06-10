@@ -1,7 +1,7 @@
+import type { CommitMessage, RunList } from './types';
 import { info, setOutput } from '@actions/core';
 import { useCheckForTag } from './commit';
 import { PyTag } from './tags';
-import type { CommitMessage, RunList } from './types';
 
 const OUTPUT_TEST_ENVIRONMENT = 'test_environment';
 const ENV_NFTS = 'nfts';

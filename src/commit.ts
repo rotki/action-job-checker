@@ -1,7 +1,7 @@
+import type { Tags } from './tags';
+import type { CommitMessage } from './types';
 import { getInput, info } from '@actions/core';
 import * as github from '@actions/github';
-import type { CommitMessage } from './types';
-import type { Tags } from './tags';
 
 export async function getCommitMessage(): Promise<CommitMessage> {
   const token = getInput('token', { required: true });
