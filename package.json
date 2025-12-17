@@ -2,7 +2,7 @@
   "name": "job-checker",
   "version": "3.2.0",
   "private": true,
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.26.0",
   "description": "Checks which jobs are ",
   "keywords": [
     "actions",
@@ -24,28 +24,29 @@
     "release": "bumpp --no-push"
   },
   "dependencies": {
-    "@actions/core": "1.11.1",
+    "@actions/core": "2.0.1",
     "@actions/github": "6.0.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.8.1",
-    "@commitlint/config-conventional": "19.8.1",
-    "@rotki/eslint-config": "4.1.0",
-    "@tsconfig/node20": "20.1.5",
-    "@types/node": "20.19.0",
-    "@vercel/ncc": "0.38.3",
-    "bumpp": "10.1.1",
-    "eslint": "9.28.0",
+    "@commitlint/cli": "20.2.0",
+    "@commitlint/config-conventional": "20.2.0",
+    "@rotki/eslint-config": "4.5.0",
+    "@rotki/eslint-plugin": "^1.2.0",
+    "@tsconfig/node24": "24.0.3",
+    "@types/node": "24.10.4",
+    "@vercel/ncc": "0.38.4",
+    "bumpp": "10.3.2",
+    "eslint": "9.39.2",
     "eslint-plugin-github": "6.0.0",
     "husky": "9.1.7",
-    "js-yaml": "4.1.0",
-    "lint-staged": "16.1.0",
-    "prettier": "3.5.3",
-    "typescript": "5.7.3",
-    "vitest": "3.2.3"
+    "js-yaml": "4.1.1",
+    "lint-staged": "16.2.7",
+    "prettier": "3.7.4",
+    "typescript": "5.9.3",
+    "vitest": "4.0.16"
   },
   "engines": {
-    "node": ">=20 <21",
+    "node": ">=24 <25",
     "pnpm": ">=10 <11"
   },
   "lint-staged": {
