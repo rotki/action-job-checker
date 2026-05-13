@@ -24,9 +24,12 @@ export async function checkForChanges(check: (files: string[] | null) => void): 
 }
 
 export function changeDetected(monitored: string[], changed: string[]): boolean {
-  for (const path of monitored) {
+  for (const raw of monitored) {
+    const path = raw.replace(/^(?:\.\/+)+/, '').replace(/\/+$/, '');
+    if (path === '' || path === '.')
+      return changed.length > 0;
     for (const detected of changed) {
-      if (detected.startsWith(path) || detected === path)
+      if (detected === path || detected.startsWith(`${path}/`))
         return true;
     }
   }

@@ -1,9 +1,21 @@
 export type CommitMessage = string | null;
 
-export interface RunList {
-  frontend: boolean;
-  colibri: boolean;
-  e2e: boolean;
-  backend: boolean;
-  docs: boolean;
+export interface EnvironmentMapping {
+  tag: string;
+  value: string;
 }
+
+export interface GroupConfig {
+  name: string;
+  paths: string[];
+  runTag?: string;
+  skipTag?: string;
+  implies: string[];
+  environments: EnvironmentMapping[];
+}
+
+export interface Config {
+  groups: GroupConfig[];
+}
+
+export type RunList = Record<string, boolean>;

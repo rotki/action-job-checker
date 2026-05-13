@@ -6,14 +6,14 @@ export default rotki({
   },
   stylistic: true,
   formatters: true,
-}, {
+}, [{
   files: ['**/*.ts'],
   rules: {
     'perfectionist/sort-objects': 'error',
   },
 }, {
-  files: ['**/*.yml'],
+  files: ['**/*.yml', '**/*.md/**'],
   rules: {
     '@stylistic/spaced-comment': 'off',
   },
-});
+}]);

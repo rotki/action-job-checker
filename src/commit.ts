@@ -1,4 +1,3 @@
-import type { Tags } from './tags';
 import type { CommitMessage } from './types';
 import { getInput, info } from '@actions/core';
 import * as github from '@actions/github';
@@ -23,9 +22,13 @@ export async function getCommitMessage(): Promise<CommitMessage> {
   return message;
 }
 
-const getRegexFromTag = (tag: Tags): RegExp => new RegExp(`\\[${tag}\\]`, 'gm');
+function escapeRegex(tag: string): string {
+  return tag.replace(/[$()*+.?[\\\]^{|}]/g, '\\$&');
+}
+
+const getRegexFromTag = (tag: string): RegExp => new RegExp(`\\[${escapeRegex(tag)}\\]`, 'gm');
 
 export function useCheckForTag(message: CommitMessage) {
-  return (tag: Tags): boolean =>
+  return (tag: string): boolean =>
     !!message && getRegexFromTag(tag).test(message);
 }

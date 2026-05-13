@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/rotki/action-job-checker/main/schema.json",
+  "title": "rotki/action-job-checker config",
+  "description": "Configuration for the rotki/action-job-checker GitHub Action. Declares the job groups that should be evaluated against PR changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["groups"],
+  "properties": {
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Job groups evaluated by the action. Each group produces a `<name>_tasks` output.",
+      "items": { "$ref": "#/definitions/group" }
+    }
+  },
+  "definitions": {
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Unique group identifier. Must start with a lowercase letter; only lowercase letters, digits, and underscores allowed. Becomes the output name as `<name>_tasks`."
+        },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Paths whose changes turn this group on. A path matches when a changed file equals it or starts with it followed by `/`. Leave empty for groups that should only be triggered by `run_tag` or `implies`."
+        },
+        "run_tag": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Commit-message tag (without brackets) that forces this group on, e.g. `run backend` matches `[run backend]`. When any group's run_tag fires, path-based detection is skipped."
+        },
+        "skip_tag": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Commit-message tag (without brackets) that forces this group off after detection, e.g. `skip py tests`."
+        },
+        "implies": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "description": "Other group names that should also be turned on whenever this group is."
+        },
+        "environments": {
+          "type": "array",
+          "description": "Optional commit-message tags that set the `<name>_environment` output to a value when this group is going to run.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tag", "value"],
+            "properties": {
+              "tag": { "type": "string", "minLength": 1, "description": "Commit-message tag (without brackets)." },
+              "value": { "type": "string", "minLength": 1, "description": "Value emitted on the `<group>_environment` output." }
+            }
+          }
+        }
+      }
+    }
+  }
+}

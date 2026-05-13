@@ -76,31 +76,116 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
-      - name: Run
+      - name: Run with inline config
         uses: ./
-        id: test
+        id: inline
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          documentation_paths: |
-            ./
-          colibri_paths: |
-            ./
-          backend_paths: |
-            ./
-          frontend_paths: |
-            ./
-      - name: Echo plugin output
+          config: |
+            groups:
+              - name: frontend
+                paths: [./]
+                run_tag: run frontend
+                implies: [e2e]
+              - name: e2e
+                run_tag: run e2e
+              - name: backend
+                paths: [./]
+                run_tag: run backend
+                skip_tag: skip py tests
+                environments:
+                  - tag: run nft py tests
+                    value: nfts
+                  - tag: run all py tests
+                    value: nightly
+              - name: docs
+                paths: [./]
+              - name: colibri
+                paths: [./]
+
+      - name: Assert inline-config outputs
         run: |
-          echo "test_environment: ${TEST_ENVIRONMENT}"
-          echo "frontend_tasks: ${FRONTEND_TASKS}"
-          echo "documentation_tasks: ${DOCUMENTATION_TASKS}"
-          echo "colibri_tasks: ${COLIBRI_TASKS}"
-          echo "backend_tasks: ${BACKEND_TASKS}"
-          echo "e2e_tasks: ${E2E_TASKS}"
+          set -euo pipefail
+          assert_eq() {
+            local name=$1 expected=$2 actual=$3
+            if [ "$actual" != "$expected" ]; then
+              echo "::error::$name: expected '$expected', got '$actual'"
+              exit 1
+            fi
+            echo "$name=$actual ✓"
+          }
+          # All groups have paths matching `./` and the runner checks out files,
+          # so every change-driven group should be on. `e2e` has no paths but
+          # frontend implies e2e, so it should be on too.
+          assert_eq frontend_tasks    'true' "${FRONTEND_TASKS}"
+          assert_eq e2e_tasks         'true' "${E2E_TASKS}"
+          assert_eq backend_tasks     'true' "${BACKEND_TASKS}"
+          assert_eq docs_tasks        'true' "${DOCS_TASKS}"
+          assert_eq colibri_tasks     'true' "${COLIBRI_TASKS}"
+          # No env-tag in the commit message, so `backend_environment` must be empty.
+          assert_eq backend_environment '' "${BACKEND_ENVIRONMENT}"
         env:
-          TEST_ENVIRONMENT: ${{ steps.test.outputs.test_environment }}
-          FRONTEND_TASKS: ${{ steps.test.outputs.frontend_tasks }}
-          DOCUMENTATION_TASKS: ${{ steps.test.outputs.documentation_tasks }}
-          COLIBRI_TASKS: ${{ steps.test.outputs.colibri_tasks }}
-          BACKEND_TASKS: ${{ steps.test.outputs.backend_tasks }}
-          E2E_TASKS: ${{ steps.test.outputs.e2e_tasks }}
+          FRONTEND_TASKS: ${{ steps.inline.outputs.frontend_tasks }}
+          E2E_TASKS: ${{ steps.inline.outputs.e2e_tasks }}
+          BACKEND_TASKS: ${{ steps.inline.outputs.backend_tasks }}
+          BACKEND_ENVIRONMENT: ${{ steps.inline.outputs.backend_environment }}
+          DOCS_TASKS: ${{ steps.inline.outputs.docs_tasks }}
+          COLIBRI_TASKS: ${{ steps.inline.outputs.colibri_tasks }}
+
+      - name: Write fixture config file
+        run: |
+          mkdir -p .github
+          cat > .github/job-checker.test.yml <<'EOF'
+          groups:
+            - name: backend
+              paths: [./]
+              run_tag: run backend
+            - name: docs
+              paths: [./]
+          EOF
+
+      - name: Run with config_path
+        uses: ./
+        id: file
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config_path: .github/job-checker.test.yml
+
+      - name: Assert config_path outputs
+        run: |
+          set -euo pipefail
+          assert_eq() {
+            local name=$1 expected=$2 actual=$3
+            if [ "$actual" != "$expected" ]; then
+              echo "::error::$name: expected '$expected', got '$actual'"
+              exit 1
+            fi
+            echo "$name=$actual ✓"
+          }
+          assert_eq backend_tasks 'true' "${BACKEND_TASKS}"
+          assert_eq docs_tasks    'true' "${DOCS_TASKS}"
+        env:
+          BACKEND_TASKS: ${{ steps.file.outputs.backend_tasks }}
+          DOCS_TASKS: ${{ steps.file.outputs.docs_tasks }}
+
+      - name: Run with invalid config (must fail)
+        uses: ./
+        id: invalid
+        continue-on-error: true
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config: |
+            groups:
+              - name: Bad-Name
+                paths: [./]
+
+      - name: Assert invalid config failed
+        run: |
+          set -euo pipefail
+          if [ "${OUTCOME}" != "failure" ]; then
+            echo "::error::expected the invalid-config step to fail, got outcome=${OUTCOME}"
+            exit 1
+          fi
+          echo "invalid config rejected ✓"
+        env:
+          OUTCOME: ${{ steps.invalid.outcome }}

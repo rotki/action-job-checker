@@ -1,46 +1,30 @@
+import type { Config } from './types';
 import * as core from '@actions/core';
+import { loadConfigFromFile, parseConfig } from './config';
 
 export interface IActionInputs {
-  readonly colibriPaths: string[];
-  readonly backendPaths: string[];
-  readonly frontendPaths: string[];
-  readonly documentationPaths: string[];
+  readonly config: Config;
   readonly skipLabel: string;
 }
 
 export class ActionInputs implements IActionInputs {
-  readonly colibriPaths: string[];
-  readonly backendPaths: string[];
-  readonly frontendPaths: string[];
-  readonly documentationPaths: string[];
+  readonly config: Config;
   readonly skipLabel: string;
 
   constructor() {
-    const COLIBRI_PATHS = 'colibri_paths';
-    const BACKEND_PATHS = 'backend_paths';
-    const FRONTEND_PATHS = 'frontend_paths';
-    const DOCUMENTATION_PATHS = 'documentation_paths';
-    const SKIP_LABEL = 'skip_label';
+    const configPath = core.getInput('config_path', { required: false }).trim();
+    const inlineConfig = core.getInput('config', { required: false });
 
-    const options = { required: true };
+    if (configPath !== '') {
+      this.config = loadConfigFromFile(configPath);
+    }
+    else if (inlineConfig.trim() !== '') {
+      this.config = parseConfig(inlineConfig);
+    }
+    else {
+      throw new Error('either `config` or `config_path` must be provided');
+    }
 
-    this.colibriPaths = this.getInputAsArray(COLIBRI_PATHS, { required: false }) ?? [];
-    this.backendPaths = this.getInputAsArray(BACKEND_PATHS, options);
-    this.frontendPaths = this.getInputAsArray(FRONTEND_PATHS, options);
-    this.documentationPaths = this.getInputAsArray(
-      DOCUMENTATION_PATHS,
-      options,
-    );
-    this.skipLabel = core.getInput(SKIP_LABEL, { required: false }) || 'skip ci';
+    this.skipLabel = core.getInput('skip_label', { required: false }) || 'skip ci';
   }
-
-  private getInputAsArray = (
-    name: string,
-    options?: core.InputOptions,
-  ): string[] =>
-    core
-      .getInput(name, options)
-      .split('\n')
-      .map(s => s.trim())
-      .filter(x => x !== '');
 }

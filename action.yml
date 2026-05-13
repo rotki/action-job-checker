@@ -1,40 +1,22 @@
 name: Job Checker
-description: Checks changes to decided which jobs are required to run
+description: Detect changes per configurable group and decide which CI jobs should run
 author: Rotki Solutions GmbH
 inputs:
   token:
     description: Github token
     required: true
-  colibri_paths:
-    description: Paths of files or directories that will trigger the colibri tasks
+  config:
+    description: Inline YAML/JSON config describing job groups. Ignored when `config_path` is set.
     required: false
-  backend_paths:
-    description: Paths of files or directories that will trigger the backend tasks
-    required: true
-  frontend_paths:
-    description: Paths of files or directories that will trigger the frontend tasks
-    required: true
-  documentation_paths:
-    description: Paths of files or directories that will trigger the documentation build
-    required: true
+  config_path:
+    description: Path to a YAML/JSON config file describing job groups. Takes precedence over `config`.
+    required: false
   skip_label:
     description: PR label that will cause all tasks to be skipped
     required: false
     default: skip ci
 
-outputs:
-  colibri_tasks:
-    description: Backend tasks should run
-  backend_tasks:
-    description: Backend tasks should run
-  frontend_tasks:
-    description: Frontend tasks should run
-  documentation_tasks:
-    description: Documentation tasks should run
-  e2e_tasks:
-    description: E2E tasks should run
-  test_environment:
-    description: nft | nightly | ''
+outputs: {}
 
 runs:
   using: node24

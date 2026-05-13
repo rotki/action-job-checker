@@ -1,7 +1,7 @@
 import { setFailed } from '@actions/core';
 import { checkRequiredTasks } from './action';
-import { usePyTestTagCheck } from './backend-tags';
 import { getCommitMessage } from './commit';
+import { applyEnvironmentMappings } from './environments';
 import { ActionInputs } from './input';
 import { setActionOutput } from './output';
 
@@ -10,9 +10,8 @@ async function run(): Promise<void> {
     const inputs = new ActionInputs();
     const commitMessage = await getCommitMessage();
     const needsToRun = await checkRequiredTasks(commitMessage, inputs);
-    const checkPyTestTags = usePyTestTagCheck(commitMessage, needsToRun);
-    checkPyTestTags();
-    await setActionOutput(needsToRun);
+    applyEnvironmentMappings(commitMessage, inputs.config, needsToRun);
+    await setActionOutput(inputs.config, needsToRun);
   }
   catch (error) {
     if (error instanceof Error)
