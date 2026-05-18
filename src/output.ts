@@ -14,10 +14,10 @@ export async function setActionOutput(config: Config, needsToRun: RunList): Prom
     const run = needsToRun[group.name];
     if (run) {
       info(`will run ${group.name} job`);
-      setOutput(outputName, true);
+      setOutput(outputName, 'true');
     }
     else {
-      setOutput(outputName, false);
+      setOutput(outputName, '');
     }
     headers.push(`${group.name} job`);
     statuses.push(getStatus(run));
