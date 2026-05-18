@@ -66,8 +66,10 @@ async function detectFromChanges(groups: GroupConfig[], needsToRun: RunList): Pr
     }
     info(`Checking ${files.length} files of the PR for changes`);
     for (const group of groups) {
-      if (group.paths.length > 0 && changeDetected(group.paths, files))
+      if (group.paths.length > 0 && changeDetected(group.paths, files)) {
         needsToRun[group.name] = true;
+        info(`group "${group.name}" matched changed files in paths [${group.paths.join(', ')}]`);
+      }
     }
   });
 }
@@ -110,6 +112,11 @@ export async function checkRequiredTasks(
 
   applyImplications(groups, needsToRun);
   applySkipTags(groups, needsToRun, checkForTag);
+
+  const summary = groups
+    .map(g => `${g.name}=${needsToRun[g.name] ? 'run' : 'skip'}`)
+    .join(', ');
+  info(`Result: ${summary}`);
 
   return needsToRun;
 }

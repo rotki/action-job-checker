@@ -33449,8 +33449,10 @@ async function detectFromChanges(groups, needsToRun) {
         }
         info(`Checking ${files.length} files of the PR for changes`);
         for (const group of groups) {
-            if (group.paths.length > 0 && changeDetected(group.paths, files))
+            if (group.paths.length > 0 && changeDetected(group.paths, files)) {
                 needsToRun[group.name] = true;
+                info(`group "${group.name}" matched changed files in paths [${group.paths.join(', ')}]`);
+            }
         }
     });
 }
@@ -33483,6 +33485,10 @@ async function checkRequiredTasks(commitMessage, inputs) {
     }
     applyImplications(groups, needsToRun);
     applySkipTags(groups, needsToRun, checkForTag);
+    const summary = groups
+        .map(g => `${g.name}=${needsToRun[g.name] ? 'run' : 'skip'}`)
+        .join(', ');
+    info(`Result: ${summary}`);
     return needsToRun;
 }
 
@@ -43619,14 +43625,17 @@ class ActionInputs {
         const configPath = getInput('config_path', { required: false }).trim();
         const inlineConfig = getInput('config', { required: false });
         if (configPath !== '') {
+            info(`Loading config from file: ${configPath}`);
             this.config = loadConfigFromFile(configPath);
         }
         else if (inlineConfig.trim() !== '') {
+            info('Loading inline config');
             this.config = parseConfig(inlineConfig);
         }
         else {
             throw new Error('either `config` or `config_path` must be provided');
         }
+        info(`Configured groups: ${this.config.groups.map(g => g.name).join(', ')}`);
         this.skipLabel = getInput('skip_label', { required: false }) || 'skip ci';
     }
 }
