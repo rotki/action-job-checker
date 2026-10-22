@@ -6,8 +6,8 @@ Thank you for considering contributing to `action-job-checker`! We welcome all k
 
 Before you start contributing make sure you have the following tools installed:
 
-- **Node.js** (version 20 or higher). For ease of setup we recommend the usage of [`nvm`](https://github.com/nvm-sh/nvm).
-- **pnpm** as the package manager
+- **Node.js** 24. For ease of setup we recommend the usage of [`nvm`](https://github.com/nvm-sh/nvm).
+- **pnpm** 12 as the package manager. The exact version is set by `packageManager` in `package.json`.
   - To install pnpm, use:
 
   `npm install -g pnpm`

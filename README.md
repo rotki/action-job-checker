@@ -1,148 +1,159 @@
-# rotki/action-job-checker
+# action-job-checker
 
-> A GitHub Action that detects which CI jobs need to run for a pull request, based on the files that changed and on commit-message tags.
+Decides which CI jobs a pull request needs, from the files it changes and the tags in its
+latest commit message.
 
-You declare a set of **groups** (e.g. `frontend`, `backend`, `docs`). For each group you list the paths that should trigger it, optional commit-message tags that force it on or off, optional implications between groups, and optional environment mappings. The action emits `<name>_tasks` and (when configured) `<name>_environment` outputs you can wire into downstream jobs.
+You describe your jobs as **groups** (`frontend`, `backend`, `docs`, ...). Each group lists
+the paths that trigger it and, optionally, commit-message tags that force it on or off, other
+groups it pulls in, and values to pass on to the job. The action sets one `<name>_tasks`
+output per group, which downstream jobs use in their `if:`.
 
-## Usage
+## How a run is decided
 
-You can provide the config inline, or point at a file in the repo (file takes precedence if both are set):
+The action reads the head commit of the PR and goes through these steps in order:
 
-```yaml
-check-changes:
-  name: Required job check
-  runs-on: ubuntu-latest
-  outputs:
-    frontend_tasks: ${{ steps.checker.outputs.frontend_tasks }}
-    backend_tasks: ${{ steps.checker.outputs.backend_tasks }}
-    e2e_tasks: ${{ steps.checker.outputs.e2e_tasks }}
-    docs_tasks: ${{ steps.checker.outputs.docs_tasks }}
-    backend_environment: ${{ steps.checker.outputs.backend_environment }}
-  steps:
-    - uses: actions/checkout@v4
-    - uses: rotki/action-job-checker@v6
-      id: checker
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        skip_label: skip ci
-        config: |
-          # yaml-language-server: $schema=https://raw.githubusercontent.com/rotki/action-job-checker/main/schema.json
-          groups:
-            - name: frontend
-              paths: [frontend/app]
-              run_tag: run frontend
-              implies: [e2e]
-            - name: e2e
-              run_tag: run e2e
-            - name: backend
-              paths:
-                - rotkehlchen
-                - requirements.txt
-                - requirements_dev.txt
-              run_tag: run backend
-              skip_tag: skip py tests
-              environments:
-                - tag: run nft py tests
-                  value: nfts
-                - tag: run all py tests
-                  value: nightly
-            - name: docs
-              paths: [docs]
-```
+1. On a `labeled` or `unlabeled` event for any label other than `skip_label`, every group is
+   skipped. Adding or removing an unrelated label does not rerun CI.
+2. If the PR carries `skip_label`, every group is skipped.
+3. If the commit message contains `[skip ci]` or `[ci skip]`, every group is skipped.
+4. Otherwise one of these turns groups on:
+   - `[run all]` turns every group on.
+   - If any group's `run_tag` is in the commit message, exactly the groups whose tag is
+     present run, and changed files are not looked at.
+   - Otherwise a group runs when one of the PR's changed files matches its `paths`.
+5. Groups listed in `implies` of a running group are turned on, recursively.
+6. A group whose `skip_tag` is in the commit message is turned off. This overrides everything
+   above, including `[run all]` and `implies`.
+7. For each running group, the first `environments` entry whose tag is in the commit message
+   sets `<name>_environment`.
 
-Or via a file:
+Tags are written in square brackets anywhere in the commit message: `[run backend]`.
 
-```yaml
-- uses: rotki/action-job-checker@v6
-  with:
-    token: ${{ secrets.GITHUB_TOKEN }}
-    config_path: .github/job-checker.yml
-```
+Outside a pull request (a push, a schedule, a manual run) there are no changed files, labels
+or commit tags to read, so every group runs.
 
-Then gate downstream jobs on the outputs:
+The run log says why each group ran or was skipped, and the job summary lists the result per
+group.
 
-```yaml
-lint-frontend:
-  needs: [check-changes]
-  if: ${{ needs.check-changes.outputs.frontend_tasks == 'true' }}
-  runs-on: ubuntu-latest
-  steps:
-    - ...
-```
+## Inputs
+
+| Input         | Required | Default   | Description                                                                          |
+| ------------- | -------- | --------- | ------------------------------------------------------------------------------------ |
+| `token`       | yes      |           | Token used to read the PR's files, labels and head commit. `github.token` is enough. |
+| `config`      | no       |           | Inline YAML or JSON config. Ignored when `config_path` is set.                       |
+| `config_path` | no       |           | Path to a YAML or JSON config file in the checked out repository.                    |
+| `skip_label`  | no       | `skip ci` | PR label that skips every group. Matched case-insensitively.                         |
+
+One of `config` and `config_path` is required.
+
+## Outputs
+
+| Output               | Value                                                                           |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `<name>_tasks`       | `'true'` when the group runs, `''` when it is skipped.                          |
+| `<name>_environment` | The `value` of the matching `environments` entry. Not set when nothing matched. |
+
+A skipped group gets an empty string rather than `'false'`, so both
+`if: needs.check.outputs.docs_tasks` and `if: needs.check.outputs.docs_tasks == 'true'` work.
 
 ## Configuration
-
-### Top-level
-
-| Field    | Required | Description                                                    |
-| -------- | -------- | -------------------------------------------------------------- |
-| `groups` | yes      | Non-empty list of groups. Order is only used in summary output |
-
-### Per group
-
-| Field          | Required | Description                                                                                                                                          |
-| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`         | yes      | Unique slug matching `^[a-z][a-z0-9_]*$`. Becomes output `<name>_tasks`                                                                              |
-| `paths`        | no       | Paths that trigger the group when any changed file equals or starts with one of them. Omit/empty if the group is only triggered by `run_tag`/implies |
-| `run_tag`      | no       | Commit-message tag (without brackets) that forces this group on. When any group's `run_tag` fires, path detection is skipped                         |
-| `skip_tag`     | no       | Commit-message tag that forces this group off after detection (overrides everything, including `[run all]`)                                          |
-| `implies`      | no       | Other groups that also turn on when this one does. Recursive                                                                                         |
-| `environments` | no       | List of `{ tag, value }` entries. The first matching tag (when the group is going to run) sets `<name>_environment` to `value`                       |
-
-### Action-level commit tags (built-in, always available)
-
-| Tag         | Effect                                                       |
-| ----------- | ------------------------------------------------------------ |
-| `[run all]` | Force every group on (still subject to `skip_tag` overrides) |
-| `[skip ci]` | Skip everything                                              |
-| `[ci skip]` | Skip everything                                              |
-
-### Skip label
-
-Setting the `skip_label` input (default `skip ci`) gives PR authors an alternative to commit tags: applying that label to the PR skips all groups.
-
-## Schema and editor support
-
-The repo ships a [JSON Schema](./schema.json) at `https://raw.githubusercontent.com/rotki/action-job-checker/main/schema.json`. Two ways to wire it up:
-
-**Inline `config` input** — add the `yaml-language-server` directive on the first line of the YAML block (see example above). Most editors with the YAML extension pick it up.
-
-**Config file** — at the top of `.github/job-checker.yml`:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/rotki/action-job-checker/main/schema.json
 groups:
-  ...
+  - name: frontend
+    paths: [frontend/app]
+    run_tag: run frontend
+    implies: [e2e]
+  - name: e2e
+    run_tag: run e2e
+  - name: backend
+    paths: [rotkehlchen, requirements.txt]
+    run_tag: run backend
+    skip_tag: skip py tests
+    environments:
+      - tag: run nft py tests
+        value: nfts
+      - tag: run all py tests
+        value: nightly
+  - name: docs
+    paths: [docs]
 ```
 
-The same schema is enforced at runtime by the action; invalid configs fail with a structured error pointing at the offending field.
+`groups` is a non-empty list. Its order only affects the summary table. Each group takes:
 
-## Outputs
+| Field          | Required | Description                                                                                                                                             |
+| -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | yes      | Unique name matching `^[a-z][a-z0-9_]*$`. The output is `<name>_tasks`.                                                                                 |
+| `paths`        | no       | A changed file matches a path when it equals it or sits under it. `./` matches any change. Leave it out for groups triggered only by tags or `implies`. |
+| `run_tag`      | no       | Tag, without brackets, that turns the group on.                                                                                                         |
+| `skip_tag`     | no       | Tag, without brackets, that turns the group off.                                                                                                        |
+| `implies`      | no       | Names of other groups that run whenever this one does.                                                                                                  |
+| `environments` | no       | List of `{ tag, value }`. The first tag found sets `<name>_environment` to `value`, if the group runs.                                                  |
 
-Outputs are determined by your config:
+The config is validated against [`schema.json`](./schema.json) at runtime. An invalid config
+fails the step and names the offending field. Unknown group names in `implies` and duplicate
+names fail too.
 
-- `<name>_tasks` (`'true' | 'false'`) — one per group
-- `<name>_environment` (string) — for groups that declare `environments` and whose matching tag is present in the commit message
+For editor completion, put the `yaml-language-server` line shown above at the top of the
+config file, or at the top of the inline `config` block.
+
+## Usage
+
+```yaml
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend_tasks: ${{ steps.checker.outputs.frontend_tasks }}
+      backend_tasks: ${{ steps.checker.outputs.backend_tasks }}
+      backend_environment: ${{ steps.checker.outputs.backend_environment }}
+    steps:
+      - uses: rotki/action-job-checker@v6
+        id: checker
+        with:
+          token: ${{ github.token }}
+          config: |
+            groups:
+              - name: frontend
+                paths: [frontend]
+              - name: backend
+                paths: [rotkehlchen]
+                environments:
+                  - tag: run all py tests
+                    value: nightly
+
+  frontend:
+    needs: check
+    if: needs.check.outputs.frontend_tasks
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "frontend changed"
+```
+
+To keep the config in the repository, check it out first and point `config_path` at it:
+
+```yaml
+steps:
+  - uses: actions/checkout@v7
+    with:
+      persist-credentials: false
+  - uses: rotki/action-job-checker@v6
+    id: checker
+    with:
+      token: ${{ github.token }}
+      config_path: .github/job-checker.yml
+```
+
+The inline `config` needs no checkout.
 
 ## Migrating from v5
 
-v5 hard-coded `frontend_paths`, `backend_paths`, `colibri_paths`, `documentation_paths` and a `test_environment` output for Python testing. v6 replaces them with the single `config`/`config_path` input. Mapping:
-
-v5:
-
-```yaml
-with:
-  frontend_paths: |
-    frontend/app
-  backend_paths: |
-    rotkehlchen
-  colibri_paths: |
-    colibri
-  documentation_paths: |
-    docs
-```
-
-v6:
+v6 replaces the fixed `frontend_paths`, `backend_paths`, `colibri_paths` and
+`documentation_paths` inputs with `config`. The v5 behaviour maps to:
 
 ```yaml
 with:
@@ -168,7 +179,9 @@ with:
         paths: [docs]
 ```
 
-Downstream output names change:
+Two outputs are renamed: `documentation_tasks` becomes `<group>_tasks` (`docs_tasks` above),
+and `test_environment` becomes `<group>_environment` (`backend_environment` above).
 
-- `documentation_tasks` → `docs_tasks` (or whatever you name the group)
-- `test_environment` → `backend_environment` (or `<group>_environment` for whichever group declares the mapping)
+## License
+
+[AGPL-3.0](./LICENSE.md) License &copy; 2023- [Rotki Solutions GmbH](https://github.com/rotki)
