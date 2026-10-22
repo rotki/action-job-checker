@@ -13,6 +13,15 @@
       "allowedVersions": "/^(24)\\./",
       "groupName": "Node.js",
       "matchPackageNames": ["@types/node", "node"]
+    },
+    {
+      "allowedVersions": "/^(12)\\./",
+      "matchPackageNames": ["pnpm"]
+    },
+    {
+      "description": "typescript-eslint and @rollup/plugin-typescript need the TS 6 JS API",
+      "allowedVersions": "<7",
+      "matchPackageNames": ["typescript"]
     }
   ]
 }
