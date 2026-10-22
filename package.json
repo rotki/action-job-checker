@@ -1,6 +1,6 @@
 {
   "name": "job-checker",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "private": true,
   "packageManager": "pnpm@12.13.0",
   "description": "Decides which CI jobs a pull request needs from its changed files and commit tags",
