@@ -5,7 +5,7 @@ import { applyEnvironmentMappings } from './environments';
 import { ActionInputs } from './input';
 import { setActionOutput } from './output';
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     const inputs = new ActionInputs();
     const commitMessage = await getCommitMessage();
@@ -20,6 +20,3 @@ async function run(): Promise<void> {
       setFailed('unknown error');
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-floating-promises, unicorn/prefer-top-level-await
-run();

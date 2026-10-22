@@ -5,7 +5,7 @@ import typescript from '@rollup/plugin-typescript';
 import { defineConfig } from 'rollup';
 
 export default defineConfig({
-  input: 'src/main.ts',
+  input: 'src/index.ts',
   onwarn(warning, warn) {
     if (warning.code === 'THIS_IS_UNDEFINED')
       return;

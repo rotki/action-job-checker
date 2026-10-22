@@ -45281,6 +45281,6 @@ async function run() {
             setFailed('unknown error');
     }
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises, unicorn/prefer-top-level-await
-run();
+
+await run();
 //# sourceMappingURL=index.js.map

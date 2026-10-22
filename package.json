@@ -3,14 +3,19 @@
   "version": "6.1.0",
   "private": true,
   "packageManager": "pnpm@12.13.0",
-  "description": "Checks which jobs are ",
+  "description": "Decides which CI jobs a pull request needs from its changed files and commit tags",
   "type": "module",
   "keywords": [
     "actions",
-    "node",
-    "setup"
+    "ci",
+    "changes"
   ],
-  "author": "Rotki Solutions GmbH",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotki/action-job-checker.git"
+  },
+  "author": "Rotki Solutions GmbH <info@rotki.com>",
   "scripts": {
     "build": "tsc --noEmit -p tsconfig.build.json",
     "lint": "eslint .",
