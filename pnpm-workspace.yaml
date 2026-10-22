@@ -12,5 +12,9 @@ shellEmulator: true
 strictDepBuilds: true
 saveExact: true
 
+overrides:
+  micromark-extension-math>katex: 0.18.11
+  oxfmt>tinypool: 2.2.0
+
 allowBuilds:
   esbuild: true
