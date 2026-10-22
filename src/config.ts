@@ -31,14 +31,19 @@ interface RawGroup {
   environments?: EnvironmentMapping[];
 }
 
+function trimToUndefined(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed === '' ? undefined : trimmed;
+}
+
 function toGroupConfig(raw: RawGroup): GroupConfig {
   return {
     environments: raw.environments ?? [],
     implies: raw.implies ?? [],
     name: raw.name,
     paths: (raw.paths ?? []).map(p => p.trim()).filter(p => p !== ''),
-    runTag: raw.run_tag?.trim() || undefined,
-    skipTag: raw.skip_tag?.trim() || undefined,
+    runTag: trimToUndefined(raw.run_tag),
+    skipTag: trimToUndefined(raw.skip_tag),
   };
 }
 

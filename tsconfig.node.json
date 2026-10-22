@@ -12,6 +12,7 @@
   "include": [
     "vite.config.*",
     "vitest.config.*",
-    "__tests__/**/*.ts"
+    "src/**/*.ts",
+    "tests/**/*.ts"
   ]
 }

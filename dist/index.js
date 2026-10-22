@@ -45181,14 +45181,18 @@ function formatErrors(errors) {
     })
         .join('\n');
 }
+function trimToUndefined(value) {
+    const trimmed = value?.trim();
+    return trimmed === '' ? undefined : trimmed;
+}
 function toGroupConfig(raw) {
     return {
         environments: raw.environments ?? [],
         implies: raw.implies ?? [],
         name: raw.name,
         paths: (raw.paths ?? []).map(p => p.trim()).filter(p => p !== ''),
-        runTag: raw.run_tag?.trim() || undefined,
-        skipTag: raw.skip_tag?.trim() || undefined,
+        runTag: trimToUndefined(raw.run_tag),
+        skipTag: trimToUndefined(raw.skip_tag),
     };
 }
 function parseConfig(source) {

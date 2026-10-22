@@ -6,6 +6,7 @@ export default rotki({
   },
   stylistic: true,
   formatters: true,
+  slop: true,
 }, [{
   files: ['**/*.ts'],
   rules: {

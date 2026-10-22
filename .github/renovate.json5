@@ -22,6 +22,11 @@
       "description": "typescript-eslint and @rollup/plugin-typescript need the TS 6 JS API",
       "allowedVersions": "<7",
       "matchPackageNames": ["typescript"]
+    },
+    {
+      "description": "First-party packages, no cooldown needed",
+      "matchPackageNames": ["@rotki/eslint-config", "@rotki/eslint-plugin"],
+      "minimumReleaseAge": "0 days"
     }
   ]
 }

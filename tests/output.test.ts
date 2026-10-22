@@ -26,7 +26,6 @@ describe('setActionOutput', () => {
     mockedSetOutput.mockClear();
   });
 
-  // eslint-disable-next-line no-template-curly-in-string
   it('emits the string "true" for running groups so if-expressions are truthy', async () => {
     const needsToRun: RunList = { backend: false, frontend: true };
 

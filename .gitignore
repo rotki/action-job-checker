@@ -95,7 +95,7 @@ typings/
 Thumbs.db
 
 # Ignore built ts files
-__tests__/runner/*
+tests/runner/*
 ### VisualStudioCode template
 .vscode/*
 !.vscode/settings.json
