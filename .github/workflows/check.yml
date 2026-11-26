@@ -1,14 +1,12 @@
 name: Check dist/
 
+# Runs on every change, Markdown-only ones included: check-dist is a required check, and a
+# skipped required check would leave a pull request waiting forever.
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '**.md'
   pull_request:
-    paths-ignore:
-      - '**.md'
   workflow_dispatch:
 
 concurrency:
