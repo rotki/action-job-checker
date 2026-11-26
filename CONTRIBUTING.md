@@ -6,23 +6,16 @@ Thank you for considering contributing to `action-job-checker`! We welcome all k
 
 Before you start contributing make sure you have the following tools installed:
 
-- **Node.js** 24. For ease of setup we recommend the usage of [`nvm`](https://github.com/nvm-sh/nvm).
-- **pnpm** 12 as the package manager. The exact version is set by `packageManager` in `package.json`.
-  - To install pnpm, use:
+- **Node.js** 24, the version in `.nvmrc`. For ease of setup we recommend the usage of [`nvm`](https://github.com/nvm-sh/nvm) (`nvm use`).
+- **pnpm** 12 as the package manager. The exact version is set by `packageManager` in `package.json`. The simplest way to get it is:
 
-  `npm install -g pnpm`
+  `corepack enable`
+
+Maintainers and coding agents should also read [AGENTS.md](./AGENTS.md), which covers the committed `dist/`, the configuration schema, dependency updates, workflow checks and releases in detail.
 
 ## Getting Started
 
 Before you start contributing, make sure you read our contribution guide to understand what we expect from a contribution.
-
-### Guidelines for Vue and TypeScript
-
-We use Vue and TypeScript in our project. Please familiarize yourself with our style and structure guidelines to ensure consistency across the codebase.
-
-**[Vue TypeScript Guide](https://docs.rotki.com/contribution-guides/vue-typescript.html#vue)**
-
-This guide provides detailed instructions and best practices for working with Vue and TypeScript in our project. Please make sure you follow these guidelines when contributing to our codebase.
 
 ### Managing Dependencies
 
@@ -158,38 +151,33 @@ We follow [Semantic Versioning](https://semver.org/) to label our releases. The 
    pnpm run release
    ```
 
-   Follow the prompts to select the appropriate version bump (e.g., patch, minor, major) based on the nature of the changes.
+   Follow the prompts to select the appropriate version bump (e.g., patch, minor, major) based on the nature of the changes. This bumps `package.json`, commits `chore: release vX.Y.Z` and creates the tag locally without pushing.
 
-2. **Push Tag**: After updating the version, push the tag to remote to trigger the release flow.
+2. **Push Tag**: Push the release commit and the tag to `rotki/action-job-checker`. The tag triggers the release workflow, which creates the GitHub release with generated notes.
 
    ```sh
-   git push --follow-tags
+   git push origin main --follow-tags
    ```
 
-3. **Update action tags**: The pushed tag will trigger the CI/CD pipeline to handle the remainder of the release process.
+3. **Move the major tag**: Point the major tag at the same commit, so consumers of `@vN` get the release. For example, after releasing `v6.1.2`:
 
-At this point the new version tag should be present at your git repository.
-The next step is to create the major version tag. If you just released `v3.1.1` you now need to update
-the v3 tag and push it as well.
+   ```sh
+   git tag -f v6 v6.1.2
+   git push -f origin v6
+   ```
 
 > [!WARNING]
 >
-> If you already have pushed a major tag in the past, you might need to overwrite it by using the
-> `--force` flag with the commands. The force is destructive, and you should be really careful when doing so.
+> Moving a tag is a force push. Only move the major tag of the release line you just published,
+> and only forward. A new major release starts a new major tag instead.
 
-```bash
-# Make sure you are at v3.1.1
-git tag v3 # -f if needed
-git push upstream v3 # -f if needed
-```
-
-By doing this you will create, or update the `v3` tag. Any consumers of the action that use this tag
-should also automatically pick the updated action.
+See the Releasing section of [AGENTS.md](./AGENTS.md) for verification steps, updating the rotki
+workflow that pins this action, and how versions are chosen.
 
 > [!NOTE]
 >
-> Make sure to properly follow schemantic versioning and avoid introducing breaking changes in minor
-> or patch releases since that might inconvenience any consumers of the major tag version.
+> Avoid breaking changes in minor or patch releases, since consumers of the major tag pick those up
+> automatically.
 
 ## Contact
 
