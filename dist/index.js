@@ -2778,6 +2778,7 @@ function requireDispatcherBase () {
 	if (hasRequiredDispatcherBase) return dispatcherBase;
 	hasRequiredDispatcherBase = 1;
 
+	const buffer = require$$0;
 	const Dispatcher = requireDispatcher();
 	const {
 	  ClientDestroyedError,
@@ -2790,6 +2791,7 @@ function requireDispatcherBase () {
 	const kOnClosed = Symbol('onClosed');
 	const kInterceptedDispatch = Symbol('Intercepted Dispatch');
 	const kWebSocketOptions = Symbol('webSocketOptions');
+	const kEventSourceOptions = Symbol('eventSourceOptions');
 
 	class DispatcherBase extends Dispatcher {
 	  constructor (opts) {
@@ -2800,12 +2802,19 @@ function requireDispatcherBase () {
 	    this[kClosed] = false;
 	    this[kOnClosed] = [];
 	    this[kWebSocketOptions] = opts?.webSocket ?? {};
+	    this[kEventSourceOptions] = opts?.eventSource ?? {};
 	  }
 
 	  get webSocketOptions () {
 	    return {
 	      maxFragments: this[kWebSocketOptions].maxFragments ?? 131072,
 	      maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 128 * 1024 * 1024
+	    }
+	  }
+
+	  get eventSourceOptions () {
+	    return {
+	      maxEventSize: this[kEventSourceOptions].maxEventSize ?? buffer.kStringMaxLength
 	    }
 	  }
 
@@ -9426,8 +9435,6 @@ function requireClientH1 () {
 	  socket[kParser] = new Parser(client, socket, llhttpInstance);
 
 	  addListener(socket, 'error', function (err) {
-	    assert(err.code !== 'ERR_TLS_CERT_ALTNAME_INVALID');
-
 	    const parser = this[kParser];
 
 	    // On Mac OS, we get an ECONNRESET even if there is a full body to be forwarded
@@ -10358,8 +10365,6 @@ function requireClientH2 () {
 	  socket[kHTTP2Session] = session;
 
 	  util.addListener(socket, 'error', function (err) {
-	    assert(err.code !== 'ERR_TLS_CERT_ALTNAME_INVALID');
-
 	    this[kError] = err;
 
 	    this[kClient][kOnError](err);
@@ -10433,8 +10438,6 @@ function requireClientH2 () {
 	}
 
 	function onHttp2SessionError (err) {
-	  assert(err.code !== 'ERR_TLS_CERT_ALTNAME_INVALID');
-
 	  this[kSocket][kError] = err;
 	  this[kClient][kOnError](err);
 	}
@@ -11382,9 +11385,10 @@ function requireClient () {
 	    // h2
 	    maxConcurrentStreams,
 	    allowH2,
-	    webSocket
+	    webSocket,
+	    eventSource
 	  } = {}) {
-	    super({ webSocket });
+	    super({ webSocket, eventSource });
 
 	    if (keepAlive !== undefined) {
 	      throw new InvalidArgumentError('unsupported keepAlive, use pipelining=0 instead')
@@ -12629,7 +12633,7 @@ function requireAgent () {
 	}
 
 	class Agent extends DispatcherBase {
-	  constructor ({ factory = defaultFactory, maxRedirections = 0, connect, ...options } = {}) {
+	  constructor ({ factory = defaultFactory, maxRedirections = 0, connect, tls, ...options } = {}) {
 	    if (typeof factory !== 'function') {
 	      throw new InvalidArgumentError('factory must be a function.')
 	    }
@@ -12648,11 +12652,15 @@ function requireAgent () {
 	      connect = { ...connect };
 	    }
 
+	    if (tls && typeof tls !== 'function') {
+	      tls = { ...tls };
+	    }
+
 	    this[kInterceptors] = options.interceptors?.Agent && Array.isArray(options.interceptors.Agent)
 	      ? options.interceptors.Agent
 	      : [createRedirectInterceptor({ maxRedirections })];
 
-	    this[kOptions] = { ...util.deepClone(options), connect };
+	    this[kOptions] = { ...util.deepClone(options), connect, tls };
 	    this[kOptions].interceptors = options.interceptors
 	      ? { ...options.interceptors }
 	      : undefined;
@@ -21195,8 +21203,10 @@ function requireFetch () {
 	  // 19. Run these steps in parallel:
 
 	  //    1. Run these steps, but abort when fetchParams is canceled:
-	  fetchParams.controller.onAborted = onAborted;
-	  fetchParams.controller.on('terminated', onAborted);
+	  if (!fetchParams.controller.resume) {
+	    fetchParams.controller.on('terminated', onAborted);
+	  }
+
 	  fetchParams.controller.resume = async () => {
 	    // 1. While true
 	    while (true) {
@@ -21365,8 +21375,6 @@ function requireFetch () {
 	          }
 	          location = headersList.get('location', true);
 
-	          this.body = new Readable({ read: resume });
-
 	          const decoders = [];
 
 	          const willFollow = location && request.redirect === 'follow' &&
@@ -21384,7 +21392,7 @@ function requireFetch () {
 	            // CVE fix similar to urllib3 (GHSA-gm62-xv2j-4w53) and curl (CVE-2022-32206).
 	            const maxContentEncodings = 5;
 	            if (codings.length > maxContentEncodings) {
-	              reject(new Error(`too many content-encodings in response: ${codings.length}, maximum allowed is ${maxContentEncodings}`));
+	              this.abort(new Error(`too many content-encodings in response: ${codings.length}, maximum allowed is ${maxContentEncodings}`));
 	              return true
 	            }
 
@@ -21416,6 +21424,8 @@ function requireFetch () {
 	              }
 	            }
 	          }
+
+	          this.body = new Readable({ read: resume });
 
 	          const onError = this.onError.bind(this);
 
@@ -21461,10 +21471,6 @@ function requireFetch () {
 	        onComplete () {
 	          if (this.abort) {
 	            fetchParams.controller.off('terminated', this.abort);
-	          }
-
-	          if (fetchParams.controller.onAborted) {
-	            fetchParams.controller.off('terminated', fetchParams.controller.onAborted);
 	          }
 
 	          fetchParams.controller.ended = true;
@@ -26264,6 +26270,20 @@ function requireReceiver () {
 	        if (isControlFrame(this.#info.opcode)) {
 	          this.#loop = this.parseControlFrame(body);
 	          this.#state = parserStates.INFO;
+
+	          // If the automatic PONG/CLOSE reply filled the socket's write buffer,
+	          // stop parsing and resume on drain so a PING flood cannot grow the
+	          // outbound queue without bound.
+	          const socket = this.ws[kResponse].socket;
+	          if (this.#loop && socket.writableNeedDrain) {
+	            this.#loop = false;
+	            socket.once('drain', () => {
+	              if (this.destroyed) return
+	              this.#loop = true;
+	              this.run(callback);
+	            });
+	            return
+	          }
 	        } else {
 	          if (!this.#info.compressed) {
 	            if (!this.writeFragments(body)) {
@@ -27295,6 +27315,7 @@ var hasRequiredEventsourceStream;
 function requireEventsourceStream () {
 	if (hasRequiredEventsourceStream) return eventsourceStream;
 	hasRequiredEventsourceStream = 1;
+	const buffer = require$$0;
 	const { Transform } = require$$0$2;
 	const { isASCIINumber, isValidLastEventId } = requireUtil$1();
 
@@ -27319,10 +27340,18 @@ function requireEventsourceStream () {
 	 */
 	const SPACE = 0x20;
 
+	const defaultMaxEventSize = buffer.kStringMaxLength;
+
 	const DATA = Buffer.from('data');
 	const EVENT = Buffer.from('event');
 	const ID = Buffer.from('id');
 	const RETRY = Buffer.from('retry');
+
+	// Each data field creates a string node, and each unconsumed input chunk keeps
+	// a Buffer wrapper. The absolute ceiling protects the large default byte limit.
+	const minParserItems = 1024;
+	const maxParserItems = 131072;
+	const bytesPerParserItem = 128;
 
 	function isASCIINumberBytes (buffer, start) {
 	  if (start >= buffer.length) {
@@ -27360,6 +27389,12 @@ function requireEventsourceStream () {
 	  }
 
 	  return true
+	}
+
+	function createMaxEventSizeExceededError () {
+	  const error = new Error('EventSource message size exceeded');
+	  error.aborted = false;
+	  return error
 	}
 
 	/**
@@ -27410,6 +27445,13 @@ function requireEventsourceStream () {
 	  pos = 0
 	  lineChunkIndex = 0
 	  linePos = 0
+	  lineLength = 0
+	  eventSize = 0
+	  eventFieldSizes = { data: 0, event: 0, id: 0, retry: 0 }
+	  dataLineCount = 0
+	  maxEventSize
+	  maxDataLines
+	  maxBufferedChunks
 
 	  event = {
 	    data: undefined,
@@ -27420,6 +27462,7 @@ function requireEventsourceStream () {
 
 	  /**
 	   * @param {object} options
+	   * @param {number} [options.maxEventSize]
 	   * @param {eventSourceSettings} options.eventSourceSettings
 	   * @param {Function} [options.push]
 	   */
@@ -27431,6 +27474,12 @@ function requireEventsourceStream () {
 	    super(options);
 
 	    this.state = options.eventSourceSettings || {};
+	    this.maxEventSize = options.maxEventSize ?? defaultMaxEventSize;
+	    const parserItemLimit = this.maxEventSize > 0
+	      ? Math.min(maxParserItems, Math.max(minParserItems, Math.floor(this.maxEventSize / bytesPerParserItem)))
+	      : 0;
+	    this.maxDataLines = parserItemLimit;
+	    this.maxBufferedChunks = parserItemLimit;
 	    if (options.push) {
 	      this.push = options.push;
 	    }
@@ -27448,6 +27497,14 @@ function requireEventsourceStream () {
 	      return
 	    }
 
+	    // A leading line ending can immediately release the currently buffered
+	    // line, even when it uses the final allowed chunk slot.
+	    if (this.maxEventSize > 0 &&
+	        this.chunks.length >= this.maxBufferedChunks &&
+	        chunk[0] !== LF && chunk[0] !== CR) {
+	      callback(createMaxEventSizeExceededError());
+	      return
+	    }
 	    this.chunks.push(chunk);
 
 	    // Strip leading byte-order-mark if we opened the stream and started
@@ -27526,7 +27583,12 @@ function requireEventsourceStream () {
 
 	        // In any case, we can process the line as we reached an
 	        // end-of-line character
-	        this.parseLine(this.readLine(), this.event);
+	        try {
+	          this.parseLine(this.readLine(), this.event);
+	        } catch (error) {
+	          callback(error);
+	          return
+	        }
 	        this.consumeCurrentByte();
 	        // A line was processed and this could be the end of the event. We need
 	        // to check if the next line is empty to determine if the event is
@@ -27535,15 +27597,28 @@ function requireEventsourceStream () {
 	        continue
 	      }
 
+	      // readLine() is only called after CR or LF. Reject an unfinished line
+	      // before it can retain an unbounded number of decoded chunks. The seven
+	      // extra bytes allow the longest field prefix ("event: " or "retry: ").
+	      if (this.maxEventSize > 0 && ++this.lineLength > this.maxEventSize + 7) {
+	        callback(createMaxEventSizeExceededError());
+	        return
+	      }
 	      this.advanceCursor();
 	    }
 
 	    callback();
 	  }
 
+	  _destroy (error, callback) {
+	    this.chunks.length = 0;
+	    this.clearEvent();
+	    super._destroy(error, callback);
+	  }
+
 	  /**
 	   * @param {Buffer} line
-	   * @param {EventStreamEvent} event
+	   * @param {EventSourceStreamEvent} event
 	   */
 	  parseLine (line, event) {
 	    // If the line is empty (a blank line)
@@ -27577,6 +27652,13 @@ function requireEventsourceStream () {
 	    }
 
 	    if (isFieldName(line, fieldLength, DATA)) {
+	      if (this.maxEventSize > 0 && this.dataLineCount >= this.maxDataLines) {
+	        throw createMaxEventSizeExceededError()
+	      }
+	      const valueBytes = line.length - valueStart;
+	      const dataSize = this.eventFieldSizes.data + (event.data === undefined ? 0 : 1) + valueBytes;
+	      this.setEventFieldSize('data', dataSize);
+
 	      const value = line.toString('utf8', valueStart);
 
 	      if (event.data === undefined) {
@@ -27584,11 +27666,13 @@ function requireEventsourceStream () {
 	      } else {
 	        event.data += `\n${value}`;
 	      }
+	      this.dataLineCount++;
 	      return
 	    }
 
 	    if (isFieldName(line, fieldLength, RETRY)) {
 	      if (isASCIINumberBytes(line, valueStart)) {
+	        this.setEventFieldSize('retry', line.length - valueStart);
 	        event.retry = line.toString('utf8', valueStart);
 	      }
 	      return
@@ -27596,18 +27680,27 @@ function requireEventsourceStream () {
 
 	    if (isFieldName(line, fieldLength, ID)) {
 	      if (isValidLastEventIdBytes(line, valueStart)) {
+	        this.setEventFieldSize('id', line.length - valueStart);
 	        event.id = line.toString('utf8', valueStart);
 	      }
 	      return
 	    }
 
 	    if (isFieldName(line, fieldLength, EVENT)) {
-	      const value = line.toString('utf8', valueStart);
-
-	      if (value.length > 0) {
-	        event.event = value;
+	      if (valueStart < line.length) {
+	        this.setEventFieldSize('event', line.length - valueStart);
+	        event.event = line.toString('utf8', valueStart);
 	      }
 	    }
+	  }
+
+	  setEventFieldSize (field, size) {
+	    const eventSize = this.eventSize - this.eventFieldSizes[field] + size;
+	    if (this.maxEventSize > 0 && eventSize > this.maxEventSize) {
+	      throw createMaxEventSizeExceededError()
+	    }
+	    this.eventSize = eventSize;
+	    this.eventFieldSizes[field] = size;
 	  }
 
 	  /**
@@ -27640,6 +27733,12 @@ function requireEventsourceStream () {
 	    this.event.event = undefined;
 	    this.event.id = undefined;
 	    this.event.retry = undefined;
+	    this.eventSize = 0;
+	    this.dataLineCount = 0;
+	    this.eventFieldSizes.data = 0;
+	    this.eventFieldSizes.event = 0;
+	    this.eventFieldSizes.id = 0;
+	    this.eventFieldSizes.retry = 0;
 	  }
 
 	  hasPendingEvent () {
@@ -27675,14 +27774,16 @@ function requireEventsourceStream () {
 	  syncLineStartToCursor () {
 	    this.lineChunkIndex = this.chunkIndex;
 	    this.linePos = this.pos;
+	    this.lineLength = 0;
 	    this.dropConsumedChunks();
 	  }
 
 	  dropConsumedChunks () {
-	    while (this.lineChunkIndex > 0) {
-	      this.chunks.shift();
-	      this.lineChunkIndex--;
-	      this.chunkIndex--;
+	    if (this.lineChunkIndex > 0) {
+	      const consumed = this.lineChunkIndex;
+	      this.chunks.splice(0, consumed);
+	      this.lineChunkIndex = 0;
+	      this.chunkIndex -= consumed;
 	    }
 
 	    if (this.chunkIndex === this.chunks.length) {
@@ -27808,6 +27909,7 @@ function requireEventsource () {
 	const { delay } = requireUtil$1();
 	const { kEnumerableProperty } = requireUtil$8();
 	const { environmentSettingsObject } = requireUtil$7();
+	const { getGlobalDispatcher } = requireGlobal();
 
 	let experimentalWarned = false;
 
@@ -28089,6 +28191,7 @@ function requireEventsource () {
 
 	      const eventSourceStream = new EventSourceStream({
 	        eventSourceSettings: this.#state,
+	        maxEventSize: this.#dispatcher.eventSourceOptions?.maxEventSize,
 	        push: (event) => {
 	          this.dispatchEvent(createFastMessageEvent(
 	            event.type,
@@ -28267,7 +28370,8 @@ function requireEventsource () {
 	  },
 	  {
 	    key: 'dispatcher', // undici only
-	    converter: webidl.converters.any
+	    converter: webidl.converters.any,
+	    defaultValue: () => getGlobalDispatcher()
 	  }
 	]);
 
@@ -38165,6 +38269,57 @@ function requireUtils () {
 	}
 
 	/**
+	 * Removes dot segments from the path of a relative reference (a path that does
+	 * not start with "/") without changing what it resolves to against any base.
+	 * Unlike `removeDotSegments`, leading ".." segments that cannot be collapsed
+	 * are kept, the result never becomes root-relative, and a result that would be
+	 * empty or start with an empty segment is prefixed with "." (an empty path
+	 * means "same document" and a leading "//" would introduce an authority).
+	 *
+	 * @param {string} path
+	 * @returns {string}
+	 */
+	function removeDotSegmentsRelative (path) {
+	  if (path === '' || path[0] === '/') {
+	    return removeDotSegments(path)
+	  }
+
+	  const segments = path.split('/');
+	  const last = segments.length - 1;
+	  /** @type {string[]} */
+	  const output = [];
+	  let trailingDirectory = false;
+
+	  for (let i = 0; i <= last; i++) {
+	    const segment = segments[i];
+	    if (segment === '.' || segment === '..') {
+	      if (segment === '..') {
+	        if (output.length !== 0 && output[output.length - 1] !== '..') {
+	          output.pop();
+	        } else {
+	          output.push('..');
+	        }
+	      }
+	      trailingDirectory = i === last;
+	    } else {
+	      output.push(segment);
+	    }
+	  }
+
+	  if (trailingDirectory && output[output.length - 1] !== '..') {
+	    output.push('');
+	  }
+	  if (output.length === 0 || output[0] === '' || output[0].includes(':')) {
+	    // An empty path, a leading empty segment ("//"), or a first segment
+	    // containing ":" (which would be mistaken for a scheme, RFC 3986 section
+	    // 4.2) must stay behind a "." segment so the reference keeps its meaning.
+	    output.unshift('.');
+	  }
+
+	  return output.join('/')
+	}
+
+	/**
 	 * Re-escape RFC 3986 gen-delims that must not appear literally in the host.
 	 * After the URI regex parses, these characters cannot be literal in the host
 	 * field, so any that appear after decoding came from percent-encoding and
@@ -38558,6 +38713,7 @@ function requireUtils () {
 	  encodeFragment,
 	  escapePreservingEscapes,
 	  removeDotSegments,
+	  removeDotSegmentsRelative,
 	  isIPv4,
 	  isUUID,
 	  normalizeIPv6,
@@ -38852,22 +39008,30 @@ function requireFastUri () {
 	if (hasRequiredFastUri) return fastUri.exports;
 	hasRequiredFastUri = 1;
 
-	const { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, serializePathEncoding, normalizeQueryFragmentEncoding, encodeQuery, encodeFragment, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = requireUtils();
+	const { normalizeIPv6, removeDotSegments, removeDotSegmentsRelative, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, serializePathEncoding, normalizeQueryFragmentEncoding, encodeQuery, encodeFragment, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = requireUtils();
 	const { SCHEMES, getSchemeHandler } = requireSchemes();
 
 	const VALID_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*$/u;
 	const MALFORMED_SCHEME_ERROR = 'URI scheme is malformed.';
+	const MALFORMED_HOST_ERROR = 'URI host is malformed.';
+	// ASCII characters outside the RFC 3986 reg-name set (unreserved, sub-delims
+	// and "%" for pct-encoded): C0 controls, space, DEL, and "#/:<>?@[\]^`{|}.
+	const FORBIDDEN_DOMAIN_HOST_CHARACTER = /[\0-\x20"#/:<>?@[\\\]^`{|}\x7F]/u;
 
 	/**
+	 * RFC 3986 section 3.1 does not allow percent-encoding in a scheme, so the
+	 * scheme is validated as-is and never decoded. Decoding would let inert input
+	 * such as `%6Aavascript:` become a live `javascript:` scheme.
+	 *
 	 * @param {string} scheme
 	 * @returns {string}
 	 */
-	function decodeValidScheme (scheme) {
-	  const decodedScheme = unescape(String(scheme));
-	  if (!VALID_SCHEME.test(decodedScheme)) {
+	function validateScheme (scheme) {
+	  const stringScheme = String(scheme);
+	  if (!VALID_SCHEME.test(stringScheme)) {
 	    throw new TypeError(MALFORMED_SCHEME_ERROR)
 	  }
-	  return decodedScheme
+	  return stringScheme
 	}
 
 	/**
@@ -38928,6 +39092,12 @@ function requireFastUri () {
 	  const resolvedHost = resolved.host;
 	  const resolvedHostIsIP = resolvedHost !== undefined && resolvedHost !== '' &&
 	    (isIPv4(resolvedHost) || normalizeIPv6(resolvedHost).isIPV6);
+	  // Inputs are parsed scheme-neutrally, so delimiters and controls in a domain
+	  // host are only detected here, once the final scheme is known. They always
+	  // fail closed, including in percent-encoded hosts.
+	  if (hasForbiddenDomainHost(resolved, options || {}, resolvedSchemeHandler, resolvedHostIsIP)) {
+	    throw new Error(MALFORMED_HOST_ERROR)
+	  }
 	  canonicalizeHost(resolved, options || {}, resolvedSchemeHandler, resolvedHostIsIP);
 	  // Percent escapes in an ASCII reg-name are encoded data. The WHATWG hostname
 	  // parser can reject them even though fast-uri preserves them safely as RFC
@@ -38985,14 +39155,17 @@ function requireFastUri () {
 	        if (relative.path[0] === '/') {
 	          target.path = removeDotSegments(relative.path);
 	        } else {
-	          if ((base.userinfo !== undefined || base.host !== undefined || base.port !== undefined) && !base.path) {
+	          const baseHasAuthority = base.userinfo !== undefined || base.host !== undefined || base.port !== undefined;
+	          if (baseHasAuthority && !base.path) {
 	            target.path = '/' + relative.path;
 	          } else if (!base.path) {
 	            target.path = relative.path;
 	          } else {
 	            target.path = base.path.slice(0, base.path.lastIndexOf('/') + 1) + relative.path;
 	          }
-	          target.path = removeDotSegments(target.path);
+	          target.path = base.scheme === undefined && !baseHasAuthority && target.path[0] !== '/'
+	            ? removeDotSegmentsRelative(target.path)
+	            : removeDotSegments(target.path);
 	        }
 	        target.query = relative.query;
 	      }
@@ -39048,7 +39221,7 @@ function requireFastUri () {
 	  const uriTokens = [];
 
 	  if (component.scheme) {
-	    component.scheme = decodeValidScheme(component.scheme);
+	    component.scheme = validateScheme(component.scheme);
 	  }
 
 	  // find scheme handler
@@ -39058,7 +39231,11 @@ function requireFastUri () {
 	  if (schemeHandler && schemeHandler.serialize) schemeHandler.serialize(component, options);
 
 	  const hasAuthority = component.userinfo !== undefined || component.host !== undefined || component.port !== undefined;
-	  const pathNoScheme = !options.skipEscape && component.scheme === undefined && !hasAuthority;
+	  // A reference with no emitted scheme is path-noscheme: a bare ':' in its
+	  // first path segment would reparse as a scheme (RFC 3986 3.3/4.2). Enforced
+	  // under skipEscape too (resolve()), so the reapply below gates on this flag.
+	  const schemelessReference = (component.scheme === undefined || options.reference === 'suffix') && !hasAuthority;
+	  const pathNoScheme = !options.skipEscape && schemelessReference;
 
 	  if (component.path !== undefined) {
 	    if (!options.skipEscape) {
@@ -39070,7 +39247,7 @@ function requireFastUri () {
 
 	  if (options.reference !== 'suffix' && component.scheme) {
 	    // Scheme handlers may replace the scheme during serialization.
-	    component.scheme = decodeValidScheme(component.scheme);
+	    component.scheme = validateScheme(component.scheme);
 	    uriTokens.push(component.scheme, ':');
 	  }
 
@@ -39090,13 +39267,18 @@ function requireFastUri () {
 	    let s = component.path;
 
 	    if (!options.absolutePath && (!schemeHandler || !schemeHandler.absolutePath)) {
-	      s = removeDotSegments(s);
+	      // A relative-path reference keeps its unresolvable leading ".." segments
+	      // and must never become root-relative (RFC 3986 section 5.2.4 applies to
+	      // merged target paths, not to the reference itself).
+	      s = schemelessReference && s[0] !== '/'
+	        ? removeDotSegmentsRelative(s)
+	        : removeDotSegments(s);
 	    }
 
 	    // Dot-segment removal can expose a colon that was not originally in the
 	    // first segment (for example, "./a:b"). Reapply path-noscheme encoding so
 	    // the serialized relative reference cannot be reparsed as a URI scheme.
-	    if (pathNoScheme) {
+	    if (schemelessReference) {
 	      s = serializePathEncoding(s, true);
 	    }
 
@@ -39211,6 +39393,11 @@ function requireFastUri () {
 	 * @returns {boolean} whether host conversion failed
 	 */
 	function canonicalizeHost (parsed, options, schemeHandler, isIP) {
+	  if (hasForbiddenDomainHost(parsed, options, schemeHandler, isIP)) {
+	    parsed.error = parsed.error || MALFORMED_HOST_ERROR;
+	    return true
+	  }
+
 	  if (
 	    !options.unicodeSupport &&
 	    (!schemeHandler || !schemeHandler.unicodeSupport) &&
@@ -39220,14 +39407,60 @@ function requireFastUri () {
 	    isIP === false &&
 	    nonSimpleDomain(parsed.host)
 	  ) {
+	    let url;
 	    try {
-	      parsed.host = new URL('http://' + parsed.host).hostname;
+	      url = new URL('http://' + parsed.host);
 	    } catch (e) {
 	      parsed.error = parsed.error || "Host's domain name can not be converted to ASCII: " + e;
 	      return true
 	    }
+	    // The WHATWG parser must have read the whole input as a host. Anything
+	    // else means it found a delimiter fast-uri did not, so its hostname would
+	    // describe a different authority.
+	    if (!isHostOnlyURL(url)) {
+	      parsed.error = parsed.error || MALFORMED_HOST_ERROR;
+	      return true
+	    }
+	    parsed.host = url.hostname;
 	  }
 	  return false
+	}
+
+	/**
+	 * Whether a domain host contains an ASCII character that RFC 3986 does not
+	 * allow in a reg-name (unreserved, sub-delims, or pct-encoded). Such a host is
+	 * rejected instead of being handed to the WHATWG URL parser, which would treat
+	 * "@" as a userinfo delimiter (silently dropping the data before it) and strip
+	 * TAB, LF, and CR. Non-ASCII characters remain allowed for IDNs.
+	 *
+	 * @param {import('./types/index').URIComponent} parsed
+	 * @param {import('./types/index').Options} options
+	 * @param {{ domainHost?: boolean }|undefined} schemeHandler
+	 * @param {boolean} isIP
+	 * @returns {boolean}
+	 */
+	function hasForbiddenDomainHost (parsed, options, schemeHandler, isIP) {
+	  return Boolean(
+	    parsed.host &&
+	    isIP === false &&
+	    !isIPLiteral(parsed.host) &&
+	    (options.domainHost || (schemeHandler && schemeHandler.domainHost)) &&
+	    FORBIDDEN_DOMAIN_HOST_CHARACTER.test(parsed.host)
+	  )
+	}
+
+	/**
+	 * @param {URL} url
+	 * @returns {boolean}
+	 */
+	function isHostOnlyURL (url) {
+	  return url.username === '' &&
+	    url.password === '' &&
+	    url.port === '' &&
+	    url.pathname === '/' &&
+	    url.search === '' &&
+	    url.hash === '' &&
+	    url.hostname !== ''
 	}
 
 	/**
@@ -39312,9 +39545,8 @@ function requireFastUri () {
 	    parsed.fragment = matches[8];
 
 	    if (parsed.scheme !== undefined) {
-	      const decodedScheme = unescape(parsed.scheme);
-	      if (VALID_SCHEME.test(decodedScheme)) {
-	        parsed.scheme = decodedScheme.toLowerCase();
+	      if (VALID_SCHEME.test(parsed.scheme)) {
+	        parsed.scheme = parsed.scheme.toLowerCase();
 	      } else {
 	        parsed.error = parsed.error || MALFORMED_SCHEME_ERROR;
 	        malformedScheme = true;
@@ -39348,7 +39580,7 @@ function requireFastUri () {
 	        parsed.host = isIP ? ipv6result.host : ipv6result.host.toLowerCase();
 
 	        if (malformedIPLiteral) {
-	          parsed.error = parsed.error || 'URI host is malformed.';
+	          parsed.error = parsed.error || MALFORMED_HOST_ERROR;
 	          malformedAuthorityOrPort = true;
 	        }
 	      } else {
@@ -39385,7 +39617,11 @@ function requireFastUri () {
 	        // pass only restores uppercase hex in escapes that remain encoded.
 	        host = normalizePercentEncoding(host.toLowerCase());
 	      }
-	      parsed.host = reescapeHostDelimiters(host, isIP);
+	      // Resolution parses both inputs with the internal `null` scheme before
+	      // the effective scheme is known. Keep raw host delimiters for that step
+	      // so resolve() can reject them for domain-host schemes; the resolved
+	      // authority is encoded when it is serialized.
+	      parsed.host = isIP || options.scheme !== 'null' ? reescapeHostDelimiters(host, isIP) : host;
 	    }
 
 	    if (!schemeHandler || (schemeHandler && !schemeHandler.skipNormalize)) {
@@ -42466,7 +42702,7 @@ function requireAjv () {
 var ajvExports = /*@__PURE__*/ requireAjv();
 var Ajv = /*@__PURE__*/getDefaultExportFromCjs(ajvExports);
 
-/*! js-yaml 5.4.3 https://github.com/nodeca/js-yaml @license MIT */
+/*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT */
 //#region src/tag.ts
 /**
 * Returned by a scalar resolver when the source does not match its tag.
@@ -43292,10 +43528,8 @@ var Schema = class Schema {
 					if (tag.matchByTagPrefix) prefix.sequence.push(tag);
 					else exact.sequence[tag.tagName] = tag;
 					break;
-				case "mapping":
-					if (tag.matchByTagPrefix) prefix.mapping.push(tag);
-					else exact.mapping[tag.tagName] = tag;
-					break;
+				case "mapping": if (tag.matchByTagPrefix) prefix.mapping.push(tag);
+				else exact.mapping[tag.tagName] = tag;
 			}
 		}
 		const implicitScalarAnyFirstChar = implicitScalarTags.filter((tag) => tag.implicitFirstChars === null);
@@ -43883,16 +44117,17 @@ function getBlockValue(input, start, end, indent, chomping, folded) {
 		}
 		const content = line.slice(textIndent);
 		const first = content.charCodeAt(0);
-		if (folded) if (first === 32 || first === 9) {
-			atMoreIndented = true;
-			result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
-		} else if (atMoreIndented) {
-			atMoreIndented = false;
-			result += "\n".repeat(emptyLines + 1);
-		} else if (emptyLines === 0) {
-			if (didReadContent) result += " ";
-		} else result += "\n".repeat(emptyLines);
-		else result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+		if (folded) {
+			if (first === 32 || first === 9) {
+				atMoreIndented = true;
+				result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+			} else if (atMoreIndented) {
+				atMoreIndented = false;
+				result += "\n".repeat(emptyLines + 1);
+			} else if (emptyLines === 0) {
+				if (didReadContent) result += " ";
+			} else result += "\n".repeat(emptyLines);
+		} else result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
 		result += content;
 		didReadContent = true;
 		emptyLines = 0;
@@ -43926,12 +44161,37 @@ var DEFAULT_TAG_HANDLERS = Object.assign(Object.create(null), {
 	"!": "!",
 	"!!": "tag:yaml.org,2002:"
 });
+function tagPercentDecode(source) {
+	let result = "";
+	let index = 0;
+	while (index < source.length) {
+		if (source.charCodeAt(index) !== 37) {
+			result += source[index++];
+			continue;
+		}
+		let ch = parseInt(source.slice(index + 1, index + 3), 16);
+		index += 3;
+		if (ch >= 192) {
+			let remaining = ch < 224 ? 1 : ch < 240 ? 2 : 3;
+			ch &= (1 << 6 - remaining) - 1;
+			while (remaining-- > 0) {
+				ch = ch << 6 | parseInt(source.slice(index + 1, index + 3), 16) & 63;
+				index += 3;
+			}
+		}
+		if (ch < 65536) result += String.fromCharCode(ch);
+		else {
+			ch -= 65536;
+			result += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+		}
+	}
+	return result;
+}
 function tagNameFull(rawTag, tagHandlers) {
-	if (rawTag.startsWith("!<") && rawTag.endsWith(">")) return decodeURIComponent(rawTag.slice(2, -1));
+	if (rawTag.startsWith("!<") && rawTag.endsWith(">")) return tagPercentDecode(rawTag.slice(2, -1));
 	const handleEnd = rawTag.indexOf("!", 1);
 	const handle = handleEnd === -1 ? "!" : rawTag.slice(0, handleEnd + 1);
-	const prefix = tagHandlers?.[handle] ?? DEFAULT_TAG_HANDLERS[handle] ?? handle;
-	return decodeURIComponent(prefix) + decodeURIComponent(rawTag.slice(handle.length));
+	return tagPercentDecode(tagHandlers?.[handle] ?? DEFAULT_TAG_HANDLERS[handle] ?? handle) + tagPercentDecode(rawTag.slice(handle.length));
 }
 //#endregion
 //#region src/parser/constructor.ts
@@ -44404,7 +44664,11 @@ function skipUntilLineEnd(state) {
 	while (ch !== 0 && !isEol(ch)) ch = state.input.charCodeAt(++state.position);
 }
 function checkPrintable(state, start, end) {
-	if (PATTERN_NON_PRINTABLE.test(state.input.slice(start, end))) throwError(state, "the stream contains non-printable characters");
+	const match = PATTERN_NON_PRINTABLE.exec(state.input.slice(start, end));
+	if (match !== null) {
+		state.position = start + match.index + match[0].length - 1;
+		throwError(state, "the stream contains non-printable characters");
+	}
 }
 function readTagProperty(state, props, inFlow) {
 	if (state.input.charCodeAt(state.position) !== 33) return false;
@@ -44431,12 +44695,14 @@ function readTagProperty(state, props, inFlow) {
 		state.position++;
 	} else {
 		while (ch !== 0 && !isWsOrEol(ch) && !(inFlow && isFlowIndicator(ch))) {
-			if (ch === 33) if (!isNamed) {
-				tagHandle = state.input.slice(suffixStart - 1, state.position + 1);
-				if (!PATTERN_TAG_HANDLE.test(tagHandle)) throwError(state, "named tag handle cannot contain such characters");
-				isNamed = true;
-				suffixStart = state.position + 1;
-			} else throwError(state, "tag suffix cannot contain exclamation marks");
+			if (ch === 33) {
+				if (!isNamed) {
+					tagHandle = state.input.slice(suffixStart - 1, state.position + 1);
+					if (!PATTERN_TAG_HANDLE.test(tagHandle)) throwError(state, "named tag handle cannot contain such characters");
+					isNamed = true;
+					suffixStart = state.position + 1;
+				} else throwError(state, "tag suffix cannot contain exclamation marks");
+			}
 			ch = state.input.charCodeAt(++state.position);
 		}
 		tagName = state.input.slice(suffixStart, state.position);
@@ -44620,7 +44886,7 @@ function readBlockScalar(state, parentIndent, props) {
 function canStartPlainScalar(state, nodeContext) {
 	const ch = state.input.charCodeAt(state.position);
 	const inFlow = nodeContext === CONTEXT_FLOW_IN;
-	if (ch === 0 || isWsOrEol(ch) || ch === 35 || ch === 38 || ch === 42 || ch === 33 || ch === 124 || ch === 62 || ch === 39 || ch === 34 || ch === 37 || ch === 64 || ch === 96 || inFlow && isFlowIndicator(ch)) return false;
+	if (ch === 0 || isWsOrEol(ch) || ch === 35 || ch === 38 || ch === 42 || ch === 33 || ch === 124 || ch === 62 || ch === 39 || ch === 34 || ch === 37 || ch === 64 || ch === 96 || isFlowIndicator(ch)) return false;
 	if (ch === 63 || ch === 45) {
 		const following = state.input.charCodeAt(state.position + 1);
 		if (isWsOrEolOrEnd(following) || inFlow && isFlowIndicator(following)) return false;
@@ -44892,19 +45158,20 @@ function parseNode(state, parentIndent, nodeContext, allowToSeek, allowCompact, 
 	if (indentStatus === 1 || nodeContext === CONTEXT_BLOCK_OUT) {
 		const flowIndent = nodeContext === CONTEXT_FLOW_IN || nodeContext === CONTEXT_FLOW_OUT ? parentIndent : parentIndent + 1;
 		const blockIndent = state.position - state.lineStart;
-		if (indentStatus === 1) if (allowBlockCollections && (readBlockSequence(state, blockIndent, props) || readBlockMapping(state, blockIndent, flowIndent, props)) || readFlowCollection(state, flowIndent, props)) hasContent = true;
-		else {
-			const ch = state.input.charCodeAt(state.position);
-			if (propertyStart !== null && allowPropertyMapping && allowBlockStyles && !allowBlockCollections && ch !== 124 && ch !== 62) {
-				const fallbackState = snapshotState(state);
-				const propertyIndent = propertyStart.position - propertyStart.lineStart;
-				restoreState(state, propertyStart);
-				if (readBlockMapping(state, propertyIndent, flowIndent, emptyProperties()) && state.events[fallbackState.eventsLength]?.type === EVENT_ID.MAPPING) hasContent = true;
-				else restoreState(state, fallbackState);
+		if (indentStatus === 1) {
+			if (allowBlockCollections && (readBlockSequence(state, blockIndent, props) || readBlockMapping(state, blockIndent, flowIndent, props)) || readFlowCollection(state, flowIndent, props)) hasContent = true;
+			else {
+				const ch = state.input.charCodeAt(state.position);
+				if (propertyStart !== null && allowPropertyMapping && allowBlockStyles && !allowBlockCollections && ch !== 124 && ch !== 62) {
+					const fallbackState = snapshotState(state);
+					const propertyIndent = propertyStart.position - propertyStart.lineStart;
+					restoreState(state, propertyStart);
+					if (readBlockMapping(state, propertyIndent, flowIndent, emptyProperties()) && state.events[fallbackState.eventsLength]?.type === EVENT_ID.MAPPING) hasContent = true;
+					else restoreState(state, fallbackState);
+				}
+				if (!hasContent && (allowBlockScalars && readBlockScalar(state, flowIndent, props) || readSingleQuotedScalar(state, flowIndent, props) || readDoubleQuotedScalar(state, flowIndent, props) || readAlias(state, props) || readPlainScalar(state, flowIndent, nodeContext, props))) hasContent = true;
 			}
-			if (!hasContent && (allowBlockScalars && readBlockScalar(state, flowIndent, props) || readSingleQuotedScalar(state, flowIndent, props) || readDoubleQuotedScalar(state, flowIndent, props) || readAlias(state, props) || readPlainScalar(state, flowIndent, nodeContext, props))) hasContent = true;
-		}
-		else if (indentStatus === 0) hasContent = allowBlockCollections && readBlockSequence(state, blockIndent, props);
+		} else if (indentStatus === 0) hasContent = allowBlockCollections && readBlockSequence(state, blockIndent, props);
 	}
 	allowBlockScalars = allowBlockScalars && !hasContent;
 	if (!hasContent && (props.anchorStart !== NO_RANGE$1 || props.tagStart !== NO_RANGE$1 || allowBlockScalars)) {
