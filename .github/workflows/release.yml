@@ -27,6 +27,15 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
 
-      - run: npx changelogithub@14.0.0
+      # The major tag (vN) can already point at the release commit, and changelogithub then
+      # cannot tell the previous release apart and fails. Give it the previous vX.Y.Z tag.
+      - name: Publish release notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if previous=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' "$TAG^" 2>/dev/null); then
+            npx changelogithub@14.0.0 --from "$previous" --to "$TAG"
+          else
+            npx changelogithub@14.0.0 --to "$TAG"
+          fi

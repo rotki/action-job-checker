@@ -208,8 +208,9 @@ version comment, and expressions that carry outside input passed to `run:` throu
 
 Follow "Releases" in `CONTRIBUTING.md`: `pnpm run release` (`bumpp --no-push`) bumps `package.json`,
 commits `chore: release vX.Y.Z` and tags it, and pushing a `v*.*` tag runs
-`.github/workflows/release.yml`, which creates the GitHub release with `changelogithub`. Nothing is
-published to npm.
+`.github/workflows/release.yml`, which creates the GitHub release with `changelogithub`. It names
+the previous `vX.Y.Z` tag itself, so a major tag already on the release commit cannot confuse it.
+Nothing is published to npm.
 
 After pushing the version tag:
 
@@ -225,6 +226,16 @@ After pushing the version tag:
 
 2. Verify: `gh release view vX.Y.Z -R rotki/action-job-checker`, and that `vN` and `vX.Y.Z` point
    at the same commit (`git rev-list -n1 vN` and `git rev-list -n1 vX.Y.Z`).
+
+   If the release is missing, read the `release` run's log and fix the cause. To publish the
+   notes for a tag that is already pushed, run `changelogithub` yourself with the previous release
+   and the repository named, since `origin` can be a fork. For example:
+
+   ```sh
+   GITHUB_TOKEN=$(gh auth token) npx changelogithub@14.0.0 --github rotki/action-job-checker \
+     --from v6.1.1 --to v6.1.2
+   ```
+
 3. Update the consumer: change the `rotki/action-job-checker@<sha> # vX.Y.Z` reference in
    `rotki/rotki`'s `.github/workflows/rotki_ci.yml` to the new commit and version (Renovate in that
    repository may propose it). Every rotki pull request runs it, so check the next rotki CI run.
